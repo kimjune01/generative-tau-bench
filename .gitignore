@@ -1,0 +1,14 @@
+# Upstream benchmarks, cloned separately, not vendored
+tau-bench/
+tau2-bench/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# OS
+.DS_Store
+</content>

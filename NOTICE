@@ -1,0 +1,19 @@
+Generative τ-bench
+Copyright (c) 2026 June Kim
+
+This project is a derivative work of and builds upon τ-bench:
+
+  τ-bench (https://github.com/sierra-research/tau-bench)
+  Copyright (c) 2024 Sierra
+  Licensed under the MIT License.
+
+  Yao, S., Shinn, N., Razavi, P., Narasimhan, K.
+  "τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains."
+  arXiv:2406.12045
+
+Portions of the design derive from τ-bench's grading mechanism (replay of a golden
+action sequence on a synthetic database, followed by a final-state hash) and from
+its mock-data generation process, as described in the τ-bench repository and paper.
+
+Related prior art (τ²-bench, and others) is cited in PRIOR_ART.md and DESIGN.md.
+</content>
