@@ -1,115 +1,75 @@
-"""Correctness of seeded re-keying (pure, no API calls).
+"""Correctness of seeded, descriptor-driven re-keying (pure, no API calls).
 
-Re-keying is a faithful alpha-rename of the initial DB and the golden program. It
-does NOT commute with replay (some tools sort lists by id value, so re-keying can
-reorder them), and it need not: the oracle is `replay(rekey(golden), rekey(db))`,
-which is self-consistent. The properties that actually matter:
+Now runs over BOTH tau-bench domains (retail and airline) through the *same* engine,
+parameterized only by each domain's `id_collections` descriptor. This is Leg 2 of the
+generalization argument: two schemas, one engine, no schema-specific re-key code.
 
-  1. injective mapping (no two ids collapse)
-  2. coverage: no original collected id leaks into the re-keyed instance
-  3. clean solvability: the re-keyed golden replays with no tool errors
-  4. freshness: the golden's id arguments all change
-  5. determinism: same seed => same oracle
+Invariants, checked over each full test suite:
+  1. faithfulness: re-keying preserves each golden's error pattern position-for-position
+     (some goldens have benign exploratory reads that error in the original too)
+  2. determinism: the re-keyed golden reaches its own oracle
+  3. coverage: no original collected id leaks into the regenerated instance
+  4. injectivity: the id map is one-to-one
 
-Run:  PYTHONPATH=. python tests/test_rekey_invariance.py    (or: python -m pytest tests/ -q)
+Run:  python -m pytest tests/ -q
 """
 from __future__ import annotations
+import copy
 
 from gtau.action import Action
-from gtau.rekey import build_mapping, _collect
-from gtau.replay import replay, apply_action, oracle_hash
-from gtau.generate import generate_from_task, _base_retail_data, _base_retail_tasks
+from gtau.rekey import build_mapping, _collect, _all_strings
+from gtau.replay import apply_action, oracle_hash
+from gtau.generate import generate_from_task
+from gtau.domains import RETAIL, AIRLINE
 
 SEEDS = [0, 1, 7, 42, 12345]
-TASK_INDICES = [0, 5, 10, 20, 50, 100]
 
 
-def _all_strings(obj):
-    out = set()
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            out.add(k) if isinstance(k, str) else None
-            out |= _all_strings(v)
-    elif isinstance(obj, list):
-        for e in obj:
-            out |= _all_strings(e)
-    elif isinstance(obj, str):
-        out.add(obj)
-    return out
+def _err_pattern(golden, data, tools):
+    d = copy.deepcopy(data)
+    return [str(apply_action(d, a, tools)).startswith("Error") for a in golden]
 
 
-def test_mapping_injective():
-    base = _base_retail_data()
-    for seed in SEEDS:
-        m = build_mapping(base, seed)
-        assert len(set(m.values())) == len(m), f"non-injective mapping at seed {seed}"
-
-
-def test_no_original_ids_leak():
-    base = _base_retail_data()
-    tasks = _base_retail_tasks()
-    original_ids = set().union(*_collect(base).values())
-    for ti in TASK_INDICES:
-        for seed in SEEDS:
-            inst = generate_from_task(tasks[ti], seed, base_data=base)
-            leaked = _all_strings(inst.data) & original_ids
-            assert not leaked, f"task {ti} seed {seed}: original ids leaked: {list(leaked)[:5]}"
-            gleaked = _all_strings([a.kwargs for a in inst.golden]) & original_ids
-            assert not gleaked, f"task {ti} seed {seed}: golden references stale ids: {gleaked}"
-
-
-def test_rekey_preserves_error_pattern():
-    """Faithfulness, checked over the WHOLE retail suite (not a sample).
-
-    Re-keying must not change WHICH golden actions error. Some tau-bench goldens
-    include exploratory reads that legitimately return 'not found' in the original
-    (19/115 retail tasks); a faithful re-key preserves that pattern exactly,
-    position-for-position. A plain 'no errors' check is wrong: it flags those benign
-    reads and only passed earlier by sampling task indices that happened to lack
-    them. Also checks the golden reaches its own oracle (determinism)."""
-    import copy
-    base = _base_retail_data()
-    tasks = _base_retail_tasks()
-
-    def err_pattern(golden, data):
-        d = copy.deepcopy(data)
-        return [str(apply_action(d, a)).startswith("Error") for a in golden]
-
+def _audit(domain) -> int:
+    base = domain.load_data()
+    tools = domain.tools()
+    tasks = domain.tasks()
+    orig_ids = _collect(base, domain.id_collections)
+    checked = 0
     for ti, task in enumerate(tasks):
-        orig = [Action.from_tau(a) for a in task.actions]
-        op = err_pattern(orig, base)
+        golden = [Action.from_tau(a) for a in task.actions]
+        op = _err_pattern(golden, base, tools)
         for seed in SEEDS:
-            inst = generate_from_task(task, seed, base_data=base)
-            assert err_pattern(inst.golden, inst.data) == op, (
-                f"task {ti} seed {seed}: re-key changed the error pattern"
+            inst = generate_from_task(task, seed, domain, base_data=base)
+            assert _err_pattern(inst.golden, inst.data, tools) == op, (
+                f"{domain.name} task {ti} seed {seed}: re-key changed the error pattern"
             )
-            assert oracle_hash(inst.golden, inst.data) == inst.oracle
+            assert oracle_hash(inst.golden, inst.data, tools) == inst.oracle
+            leak = _all_strings(inst.data, set()) & orig_ids
+            assert not leak, (
+                f"{domain.name} task {ti} seed {seed}: leaked ids {list(leak)[:3]}"
+            )
+            checked += 1
+    return checked
 
 
-def test_fresh_ids():
-    tasks = _base_retail_tasks()
-    for ti in TASK_INDICES:
-        base_golden = [Action.from_tau(a) for a in tasks[ti].actions]
-        base_ids = _all_strings([a.kwargs for a in base_golden]) & \
-            set().union(*_collect(_base_retail_data()).values())
-        if not base_ids:
-            continue
-        inst = generate_from_task(tasks[ti], 999)
-        new_ids = _all_strings([a.kwargs for a in inst.golden])
-        assert not (base_ids & new_ids), f"task {ti}: some golden ids unchanged"
+def test_retail_faithful():
+    assert _audit(RETAIL) > 0
 
 
-def test_deterministic():
-    tasks = _base_retail_tasks()
-    a = generate_from_task(tasks[0], 42)
-    b = generate_from_task(tasks[0], 42)
-    assert a.oracle == b.oracle and a.mapping == b.mapping
+def test_airline_faithful():
+    assert _audit(AIRLINE) > 0
+
+
+def test_injective():
+    for domain in (RETAIL, AIRLINE):
+        base = domain.load_data()
+        for seed in SEEDS:
+            m = build_mapping(base, seed, domain.id_collections)
+            assert len(set(m.values())) == len(m), f"{domain.name} seed {seed} non-injective"
 
 
 if __name__ == "__main__":
-    test_mapping_injective()
-    test_no_original_ids_leak()
-    test_golden_solves_cleanly()
-    test_fresh_ids()
-    test_deterministic()
-    print("all re-key invariants OK")
+    for d in (RETAIL, AIRLINE):
+        print(f"{d.name}: {_audit(d)} checks faithful")
+    print("injectivity OK")

@@ -1,10 +1,12 @@
-"""Seeded re-keying of a retail instance.
+"""Seeded, descriptor-driven re-keying of a database-shaped instance.
 
 The load-bearing move of generative tau-bench: because the oracle is computed by
 *replaying* a golden action program (not by reading a stored answer), we can alpha-
 rename an instance and the oracle re-derives for free. This module builds a seeded
-bijection over the id namespaces of the retail world and applies it consistently to
-the database, the golden action program, and any text (instruction, outputs).
+bijection over the id namespaces of a tool-world DB and applies it consistently to
+the database, the golden action program, and any text (instruction, outputs). It
+names no benchmark: the id namespaces come from a per-domain `id_collections`
+descriptor (see gtau/domains.py).
 
 Re-keying is a faithful alpha-rename of the *initial DB and the golden program*.
 It does NOT commute with replay in general: some tools order lists by id value
@@ -24,8 +26,9 @@ No tau_bench import here: pure dict/list/str transforms.
 """
 from __future__ import annotations
 import random
+import re
 import string
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from .action import Action
 
@@ -39,51 +42,40 @@ def _digits(rng: random.Random, n: int) -> str:
     return "".join(rng.choice(string.digits) for _ in range(n))
 
 
-def _collect(data: Dict[str, Any]) -> Dict[str, set]:
-    users, orders, products = data["users"], data["orders"], data["products"]
-    item_ids: set = set()
-    for p in products.values():
-        item_ids |= set(p.get("variants", {}).keys())
-    for o in orders.values():
-        for it in o.get("items", []):
-            if "item_id" in it:
-                item_ids.add(it["item_id"])
-    payment_ids: set = set()
-    emails: set = set()
-    for u in users.values():
-        payment_ids |= set(u.get("payment_methods", {}).keys())
-        if u.get("email"):
-            emails.add(u["email"])
-    tracking: set = set()
-    for o in orders.values():
-        for f in o.get("fulfillments", []):
-            for t in f.get("tracking_id", []):
-                tracking.add(t)
-    return {
-        "user_id": set(users.keys()),
-        "order_id": set(orders.keys()),
-        "product_id": set(products.keys()),
-        "item_id": item_ids,
-        "payment_id": payment_ids,
-        "email": emails,
-        "tracking_id": tracking,
-    }
+def _collect(data: Any, id_collections: Set[str]) -> set:
+    """All id strings in the instance: the keys of every dict that sits under a field
+    named in `id_collections`. Schema-agnostic given that small descriptor, so
+    `flights[*].dates` (a date-keyed dict) is left untouched while `users`,
+    `reservations`, `payment_methods`, `variants`, etc. are collected. Values that
+    reference these ids elsewhere (e.g. `user_id`, `flight_number`, `payment_id`) are
+    remapped by exact-string match in deep_remap; they need not be listed."""
+    ids: set = set()
+
+    def walk(obj: Any, field) -> None:
+        if isinstance(obj, dict):
+            if field in id_collections:
+                ids.update(k for k in obj if isinstance(k, str))
+            for k, v in obj.items():
+                walk(v, k)
+        elif isinstance(obj, list):
+            # list elements are positional, not id-keyed, so they must NOT inherit the
+            # collection field. (Guards the 'flights' overload: a top-level flights
+            # table vs a reservation's flights list of leg objects.)
+            for e in obj:
+                walk(e, None)
+
+    walk(data, None)
+    return ids
 
 
-def _mint(rng: random.Random, ns: str, old: str) -> str:
-    if ns == "order_id":
-        return "#W" + _digits(rng, 7)
-    if ns in ("product_id", "item_id", "tracking_id"):
-        # preserve original length so downstream formats stay plausible
-        return _digits(rng, max(6, len(old)))
-    if ns == "payment_id":
-        prefix = old.rsplit("_", 1)[0] if "_" in old else "credit_card"
-        return f"{prefix}_{_digits(rng, 7)}"
-    if ns == "email":
-        return f"user{_digits(rng, 6)}@example.com"
-    if ns == "user_id":
-        return f"user_{_digits(rng, 8)}"
-    return old
+def _mint(rng: random.Random, old: str) -> str:
+    """Format-preserving fresh id: regenerate every maximal digit run and leave the
+    non-digit structure intact ('#W', 'credit_card_', 'HAT', 'yusuf_rossi_'). Works
+    across schemas with no namespace knowledge."""
+    new = re.sub(r"\d+", lambda m: _digits(rng, len(m.group())), old)
+    if new == old:  # no digits to vary; append a suffix so it is still fresh
+        new = f"{old}_{_digits(rng, 4)}"
+    return new
 
 
 def _all_strings(obj: Any, out: set) -> set:
@@ -100,23 +92,20 @@ def _all_strings(obj: Any, out: set) -> set:
     return out
 
 
-def build_mapping(data: Dict[str, Any], seed: int) -> Dict[str, str]:
-    """One combined old->new dict across all namespaces. Id formats are disjoint,
-    so exact-string replacement with a single dict is unambiguous. Minted ids avoid
-    both prior mints (injectivity) and every string already in the DB (so a fresh id
-    can never alias an existing value)."""
+def build_mapping(data: Any, seed: int, id_collections: Set[str]) -> Dict[str, str]:
+    """One combined old->new id dict, format-preserving. Minted ids avoid both prior
+    mints (injectivity) and every string already in the DB (so a fresh id can never
+    alias an existing value)."""
     rng = random.Random(seed)
-    spaces = _collect(data)
     existing = _all_strings(data, set())
     mapping: Dict[str, str] = {}
     used: set = set()
-    for ns in sorted(spaces):  # sorted for determinism
-        for old in sorted(spaces[ns]):
-            new = _mint(rng, ns, old)
-            while new in used or new in existing:  # injective + no aliasing
-                new = _mint(rng, ns, old)
-            used.add(new)
-            mapping[old] = new
+    for old in sorted(_collect(data, id_collections)):  # sorted for determinism
+        new = _mint(rng, old)
+        while new == old or new in used or new in existing:  # fresh + injective + no aliasing
+            new = _mint(rng, old)
+        used.add(new)
+        mapping[old] = new
     return mapping
 
 
@@ -159,8 +148,9 @@ def rekey_instance(
     instruction: str,
     outputs: List[str],
     seed: int,
+    id_collections: Set[str],
 ) -> Tuple[Dict[str, Any], List[Action], str, List[str], Dict[str, str]]:
-    m = build_mapping(data, seed)
+    m = build_mapping(data, seed, id_collections)
     return (
         rekey_data(data, m),
         rekey_actions(actions, m),

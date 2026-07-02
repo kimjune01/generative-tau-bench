@@ -57,10 +57,11 @@ def _outputs_present(required: List[str], messages: List[str]) -> bool:
 def run_episode(
     agent: AgentAdapter,
     instance: Instance,
+    tools: dict,
     max_steps: int = 30,
     user_sim: Optional[UserSim] = None,
 ) -> EpisodeResult:
-    world = World(instance.data)
+    world = World(instance.data, tools)
     # With a UserSim, the agent must ELICIT intent and never sees the raw script.
     view = TaskView(
         instruction=user_sim.opening() if user_sim else instance.instruction,

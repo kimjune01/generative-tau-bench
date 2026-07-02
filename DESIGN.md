@@ -279,7 +279,7 @@ rank-preservation / gap-decomposition analysis, not just a drop.
 
 Every component exists. The contribution is the synthesis, formalization, and
 receipts, not a new primitive, and the paper is only real if it is built and
-measured. A dedicated method-level prior-art sweep is in [`PRIOR_ART_METHOD.md`](PRIOR_ART_METHOD.md)
+measured. A dedicated method-level prior-art sweep is in [`docs/PRIOR_ART_METHOD.md`](docs/PRIOR_ART_METHOD.md)
 (citations verified 2026-07-01); its verdict is folded in below.
 
 **As a broad claim ("make benchmarks dynamic/evergreen/contamination-resistant"),

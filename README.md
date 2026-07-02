@@ -1,83 +1,98 @@
 # Generative τ-bench
 
-A seeded, replay-oracle extension of [τ-bench](https://github.com/sierra-research/tau-bench)
-for contamination-resistant, statistically honest tool-agent evaluation.
+A *method* for converting a database-shaped tool-agent benchmark into an evergreen,
+contamination-resistant one, via seeded regeneration plus a **replay-derived oracle**.
+τ-bench is the case study, not the product.
 
 ## The idea in one paragraph
 
-τ-bench grades an agent by replaying a golden action sequence on a synthetic
-database and hashing the final state. That oracle is *operational*: it is computed
-by running a program, not by reading a stored answer. Anything computed by replay
-can be recomputed under a transformation of its inputs, so the goldens need not be
-static. Publish a seeded generator that emits the database, the golden program, and
-(by replay) the oracle, and you get fresh instances on demand from an open,
-auditable source. The contamination fix is regeneration, not secrecy. The same move
-also buys error bars (unbounded fresh instances) and difficulty control (generated,
-not hand-authored).
+τ-bench grades an agent by replaying a golden action program on a synthetic database
+and hashing the final state. That oracle is *operational*: it is computed by running a
+program, not by reading a stored answer, and anything computed by replay can be
+recomputed under a transformation of its inputs. So publish a seeded generator that
+emits the database, the golden program, and (by replay) the oracle, and you get fresh,
+graded instances for free. Freshness by *generation*, not by mining new tasks
+(LiveBench/SWE-rebench) or authoring per-variant answer keys (GSM-Symbolic). Games,
+RL, vision, and software testing all found the same trick; the replay oracle is what
+makes its strongest form ("generation *is* grading") reachable for stateful tool
+agents. See [`DESIGN.md`](DESIGN.md) for the full argument and the oracle-strength ladder.
 
 ## Status
 
-MVP built and the re-key invariance is validated (9/9 tests pass): seeded re-keying
-produces coherent, fresh, solvable instances with re-derived oracles. Two known
-limits, surfaced by review and recorded in DESIGN.md Risks: cosmetic re-keying is
-likely near-inert against the *semantic* contamination that exists in tau-bench (the
-real signal needs structural regeneration, unbuilt), and the self-contained-instruction
-eval leaks the user simulator's private intent, so its scores are marked
-`comparable=False` and are not tau-bench-comparable until a `UserSim` mediates.
+Schema-agnostic engine, validated on **two τ-bench domains through one code path**
+plus per-domain descriptors:
 
-Decisive next experiment: run one strong model on the retail suite, original vs
-re-keyed, and read the paired gap (`gtau/metrics.py` McNemar). It needs model runs,
-so it is not executed here.
+| domain | descriptor | faithfulness (all test tasks × 5 seeds) |
+|--------|-----------:|-----------------------------------------|
+| retail | 5 field names | **575 / 575** |
+| airline | 4 field names | **250 / 250** |
+
+"Faithful" = re-keying preserves each golden's error pattern position-for-position,
+the re-keyed golden reaches its own oracle (determinism), no original id leaks
+(coverage), and the id map is injective. Full suite: 7 tests passing.
+
+Honest scope (see [`docs/GENERALIZATION_ASSESSMENT.md`](docs/GENERALIZATION_ASSESSMENT.md)):
+this proves the engine is *schema-general within the τ-bench family*. It does **not**
+yet prove generalization across the precondition class — retail and airline share one
+harness. The next step is one genuinely independent benchmark (candidate: AppWorld),
+gated on whether it exposes a replay-able canonical solution.
+
+## Domain of validity
+
+The recipe applies iff a task is "database-shaped": (1) state is enumerable typed
+entities with ids; (2) the solution is a program over those entities; (3) the oracle
+is a deterministic function of the final state (replay-checkable); (4) a
+constraint-preserving resampler exists. Real-world SWE/repo tasks fail these, which is
+why coding benchmarks mine fresh tasks instead of regenerating them.
 
 ## Code layout
 
 ```
 gtau/
-  action.py      Action record (name + kwargs), dependency-free
+  domains.py     Domain = the whole per-benchmark descriptor (id_collections + loaders)
+  rekey.py       seeded, descriptor-driven re-key; schema-agnostic, names no domain
+  replay.py      replay a golden through tau-bench's real tools; oracle_hash
+  generate.py    (base task, seed, domain) -> fresh Instance with re-derived oracle
   hashing.py     to_hashable / consistent_hash, copied from tau-bench (attributed)
-  rekey.py       seeded bijection over retail id namespaces; deep_remap; pure
-  replay.py      replay a golden through tau-bench's real tools; oracle_hash (lazy import)
-  generate.py    (base task, seed) -> fresh Instance with re-derived oracle
-  world.py       minimal live retail world (no LLM user simulator, no API calls)
+  world.py       minimal live world (no LLM user simulator, no API calls)
   eval.py        run_episode: drive an agent against a World, score vs oracle
   metrics.py     pass^k / pass@k (tau-bench estimator) + paired McNemar
-  adapters/
-    base.py      AgentAdapter interface, tool catalog, JSON action parser
-    cli_agent.py CLIAgentAdapter + claude_adapter() / codex_adapter()
-tests/test_rekey_invariance.py   the load-bearing claim, as a runnable check
-scripts/run_eval.py              CLI entry: seeded trials -> pass^k
+  adapters/      pluggable agent interface + claude/codex CLI adapters
+tests/           re-key faithfulness (both domains) + unit tests
+scripts/run_eval.py   seeded trials -> pass^k (spawns a CLI agent; not run in CI)
 ```
 
-The re-key and hashing layers import nothing from `tau_bench` (verified), so the
-core stays free of the litellm/openai/anthropic stack. `tau_bench` is imported
-lazily only where the real tool logic and data are needed.
+Everything schema-specific lives in a `Domain`; the re-key, replay, and oracle code
+name no benchmark. A `Domain`'s size is the portability metric.
 
-## Usage (not exercised in-repo yet)
+## Setup and run
 
 ```bash
-# one-time: clone tau-bench beside this repo and install it into a venv
+# clone tau-bench beside this repo (not vendored; MIT) and install into a venv
 git clone https://github.com/sierra-research/tau-bench
-uv venv && source .venv/bin/activate && uv pip install -e ./tau-bench
+uv venv && source .venv/bin/activate && uv pip install -e ./tau-bench pytest
 
-# the load-bearing invariance check (pure, no API calls):
+# the faithfulness audit over both domains (pure, no API calls; ~4 min):
 python -m pytest tests/ -q
 
 # a CLI-agent episode (spawns claude/codex, which carry their own auth):
-python scripts/run_eval.py --agent claude --task 0 --trials 8
-python scripts/run_eval.py --agent codex  --task 0 --trials 8
+python scripts/run_eval.py --agent claude --domain retail --task 0 --trials 8
 ```
 
-## Contents
+## Docs
 
-- [`DESIGN.md`](DESIGN.md) — the full design and paper plan.
-- [`PRIOR_ART.md`](PRIOR_ART.md) — prior-art search and novelty assessment, citations
-  verified 2026-07-01.
-- [`RELIABILITY-BENCHES.md`](RELIABILITY-BENCHES.md) — background notes on how
-  reliability benchmarks are built and the construction principles behind them.
+- [`DESIGN.md`](DESIGN.md) — design and paper plan: contribution, domain-of-validity,
+  contamination motivation, the cross-domain oracle-ladder spine, novelty, and the
+  "what we must prove and the n it takes" evidentiary plan.
+- [`docs/PRIOR_ART.md`](docs/PRIOR_ART.md) and [`docs/PRIOR_ART_METHOD.md`](docs/PRIOR_ART_METHOD.md)
+  — prior-art sweeps (component-level and method-level), citations verified.
+- [`docs/GENERALIZATION_ASSESSMENT.md`](docs/GENERALIZATION_ASSESSMENT.md) — blunt
+  reviewer-style assessment of what the generalization claim needs.
+- [`docs/RELIABILITY-BENCHES.md`](docs/RELIABILITY-BENCHES.md) — background on how
+  reliability benchmarks are built.
 
 ## Relationship to τ-bench
 
-This is a derivative work of τ-bench (MIT, Copyright 2024 Sierra), used and extended
-under the MIT license. τ-bench itself is not vendored here; clone it separately. See
-[`NOTICE`](NOTICE) for attribution and [`LICENSE`](LICENSE) for terms.
+A derivative work of τ-bench (MIT, © 2024 Sierra), extended under the MIT license.
+τ-bench is not vendored; clone it separately. See [`NOTICE`](NOTICE) and [`LICENSE`](LICENSE).
 </content>
