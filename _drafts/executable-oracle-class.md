@@ -161,6 +161,27 @@ than either alone. [survey, verified]
   theorem-like equivariance condition is explicit, AND (b) an empirical **contamination
   failure/success BOUNDARY across classes** is shown.
 
+## Blind validation (fable, no context) — CONVERGED + improved
+
+Posed the evergreen-bench question cold to fable. It independently:
+- re-derived precondition 5, with a sharper form: regeneration fails when the graded artifact
+  *quantifies over* the randomized state (program/query/policy); works when it lives at/below
+  the state level.
+- classified text-to-SQL and competitive-coding as FAILS (the non-obvious calls), correctly.
+- independently confirmed the Zhong-Yu-Klein 2020 prior art (test-suite accuracy exploits the
+  invariance as a *grading* trick) and matched codex's novelty read (the boundary framing is
+  not crisply written down).
+Two additions folded into DESIGN:
+- **Failure mode A (cheap transport):** equivariance is necessary but not sufficient — the
+  transport from a memorized answer to the fresh instance must itself require the skill, else
+  regeneration only *degrades* (GSM-Symbolic). => precondition 5 is now "skill-bearing".
+- **Chollet objection reduced to construct validity:** "trained on the distribution" is the
+  standard representativeness requirement relocated to the generator; dissolves if the
+  generator covers the target task; discharge via expressive-range + held-out task families;
+  scope the claim to demonstrated coverage. (Now the Risks headline, framed as answerable.)
+Clean framing stolen: "regeneration for grader integrity" vs "for contamination resistance"
+are different properties, conflated constantly; SQL/coding get the former, not the latter.
+
 ## Cycle-1 result: the refined thesis (paper spine)
 
 **Contribution =** (1) formalize scored-target state-equivariance as the precondition for

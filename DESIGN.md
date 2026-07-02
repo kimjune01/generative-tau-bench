@@ -52,10 +52,26 @@ The recipe applies iff:
 3. **The oracle is a deterministic function of the final state** (replay-checkable) — not a
    stored key (a *lookup*), nor an LLM/human *judgment*.
 4. **A constraint-preserving resampler exists** (vary contents without breaking solvability).
-5. **(the crux) The scored output co-varies with the regenerated state** — *scored-target
-   state equivariance*. If the scored artifact is *invariant* under regeneration, memorizing
-   it survives and regeneration buys nothing. This is a formalization of a known
-   equivariance / label-changing-transform principle, not a new phenomenon.
+5. **(the crux) The scored output co-varies with the regenerated state, and recovering that
+   co-variation requires the measured skill** — *skill-bearing state equivariance*. Two
+   failure modes it rules out (independently re-derived by a blind fable pass, which also
+   confirmed the SQL/coding calls and the Zhong-et-al. prior art):
+   - *Invariance (mode B):* if the scored artifact is *invariant* under regeneration —
+     because correctness is defined by *executing* it against the seed's data (a SQL query, a
+     program, a policy that quantifies over the state) — then the correct answer is a fixed
+     point of the whole grader family, and memorizing it survives. Regeneration here hardens
+     the grader against *wrong* answers (grader integrity) but does nothing for contamination;
+     conflating the two is the common error.
+   - *Cheap transport (mode A):* if the answer co-varies but can be produced by a skill-free
+     transport of a memorized canonical answer (rename variables, plug fresh numbers into a
+     memorized closed form), regeneration only *degrades* memorization, it does not defeat it,
+     and the measured construct quietly shrinks (GSM-Symbolic: "comprehend and solve" →
+     "plug in and compute"). τ-bench passes because the transport *is* the skill: executing a
+     policy against freshly-bound state via tool calls is what is being measured.
+   The crisp form (fable): regeneration measures exactly the computation that transports the
+   seed's fresh entropy into the graded output; whatever the randomization leaves invariant
+   remains memorizable and silently drops out of what is measured. This is a formalization of
+   a known equivariance / label-changing principle, not a new phenomenon.
 
 Precondition 5 is what a "database-shaped" reading misses, and it redraws the boundary:
 
@@ -458,9 +474,24 @@ comparison remains the blocking novelty check.
 - **Authoring cost is the real labor.** Regeneration saves per-instance annotation,
   not per-class design. Width equals authored classes. LLM-authoring classes to
   scale reintroduces the solvability audit on machine-made templates.
-- **Distribution overfit persists.** Regeneration kills instance memorization, not
-  overfitting to a narrow generator. ProcGen shows this empirically. Mitigate with
-  width, held-out task families, and seed rotation.
+- **"Trained on the distribution" (the Chollet objection) reduces to construct validity.**
+  The strongest attack (fable, via Chollet's *On the Measure of Intelligence*, 2019):
+  regeneration relocates memorization one level up — the generator is a finite public
+  artifact, so a model can train on its whole distribution, and within a fixed procedural
+  family "trained on the distribution" is behaviorally indistinguishable from the skill. But
+  this is **not a new failure introduced by regeneration**; it is the standard construct-
+  validity requirement every benchmark already bears (a static suite that isn't a
+  representative sample of its target task measures the wrong thing too), relocated from the
+  fixed sample to the generator. It dissolves *if the generator's distribution faithfully
+  covers the target task*: then distribution-mastery *is* skill, which is the goal. The
+  residue is concrete and dischargeable: (i) a mechanical generator is more prone to narrow
+  coverage and non-task *tells* than a curated sample, so representativeness must be *shown*,
+  not assumed — via expressive-range / coverage analysis (Smith & Whitehead) and held-out
+  task *families* (not just held-out seeds); (ii) the legitimate/illegitimate line is sharp —
+  learning task-relevant structure is skill, learning generator artifacts is the failure, and
+  the artifact bucket is exactly what expressive-range analysis bounds; (iii) scope the claim
+  to the generator's demonstrated coverage — "skill on this distribution" — as any curated
+  benchmark's "we sampled 500 issues" claim also is, just made explicit.
 - **The novelty negative is a search result, not a proof.** Re-run the sweep before
   submission.
 
