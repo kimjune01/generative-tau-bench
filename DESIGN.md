@@ -7,41 +7,74 @@ paper plan.
 
 ## Contribution (crystallized)
 
-> A reusable transformation for **database-shaped stateful tool-agent benchmarks**
-> that combines seeded, constraint-preserving regeneration of each instance with a
-> **replay-derived final-state oracle**, so fresh instances *and their graders*
-> re-derive from a seed with no re-annotation and no mining of new real tasks.
+> A reusable transformation for **interactive, state-mutating benchmarks whose scored
+> output co-varies with the regenerated state**: combine seeded, constraint-preserving
+> regeneration of the environment state with a **replay-derived oracle** (re-execute a
+> canonical reference against that state), so fresh instances *and their graders*
+> re-derive from a seed with no re-annotation and no mining. The empirical core is
+> mapping the boundary of *when* regeneration defeats contamination.
 
-The framing is a method, not a benchmark. That matters strategically (a recipe gets
-cited even when a given instantiation is not adopted) and it sets the bar: the
-transformation should be shown on more than one benchmark (τ-bench plus AppWorld or
-ToolSandbox) so it reads as a method, not a single benchmark in method's clothing.
+Reframed after an adversarial fan-out (log: `_drafts/executable-oracle-class.md`; codex
+convergence folded in). Three things changed the claim:
 
-Lead with the words that are unconditionally true, **evergreen, reproducible,
-difficulty-controlled, paired**; treat *contamination-resistant* as a corollary of
-evergreen-with-seed-rotation, not as the headline (it carries an empirical burden a
-null gap cannot discharge; see Risks).
+- **The load-bearing precondition is equivariance, not "database-shaped"** (see Domain of
+  validity, precondition 5). This is what killed the tempting text-to-SQL and competitive-
+  coding demonstrations.
+- **Two regeneration axes.** *State*-regeneration (ours) keeps the oracle a pure computation
+  and holds difficulty fixed (re-keying is a nuisance-parameter swap). *Problem*-regeneration
+  (DyVal, GSM-Symbolic: synthesize a fresh problem) also defeats contamination but reintroduces
+  variable difficulty and well-posedness risk through an LLM in the instance path. We claim the
+  state-regeneration axis for interactive environments; we cite problem-regeneration as the
+  neighboring alternative (e.g. text-to-SQL is only evergreen-able on *that* axis).
+- **Position vs DyVal.** Extend contamination-resistant dynamic evaluation from generated
+  *static reasoning* instances (DyVal, ICLR 2024; GSM-Symbolic) to *stateful interactive
+  environments* where the instance is a mutable world state and correctness is computed by
+  replaying a reference against it. DyVal is the single-turn degenerate case — cited, not
+  claimed as the genus (property-based testing, MiniWoB/WebArena also live in that genus).
+
+The framing is a method, not a benchmark (a recipe gets cited even when an instantiation is
+not adopted). It sets the bar: show the transformation on a second, *independent* benchmark
+(**WorkArena**, not just a second τ-bench domain), and — the real empirical contribution —
+demonstrate the equivariance boundary *across classes*.
+
+Lead with the words that are unconditionally true: **evergreen, reproducible,
+difficulty-controlled, paired**. Treat *contamination-resistant* as earned by the boundary
+experiment, not asserted (a null gap alone cannot discharge it; and per Recht a non-null gap
+is not automatically memorization; see Risks).
 
 ## Domain of validity (the applicability theorem)
 
-The recipe applies iff a task satisfies all four preconditions:
+The recipe applies iff:
 
-1. **State is enumerable typed entities with ids** (a relational DB, not free text).
-2. **The solution is a program over those entities**, so it transforms under the
-   same seeded re-key the state does.
-3. **The oracle is a deterministic function of the final state** (replay-checkable),
-   not a bespoke artifact.
-4. **A constraint-preserving resampler exists** (vary contents without breaking
-   solvability).
+1. **State is enumerable typed entities with ids** (a relational/world DB, not free text).
+2. **The interaction is a program over those entities** that replays/transforms under the
+   seeded re-key.
+3. **The oracle is a deterministic function of the final state** (replay-checkable) — not a
+   stored key (a *lookup*), nor an LLM/human *judgment*.
+4. **A constraint-preserving resampler exists** (vary contents without breaking solvability).
+5. **(the crux) The scored output co-varies with the regenerated state** — *scored-target
+   state equivariance*. If the scored artifact is *invariant* under regeneration, memorizing
+   it survives and regeneration buys nothing. This is a formalization of a known
+   equivariance / label-changing-transform principle, not a new phenomenon.
 
-In scope: τ-bench, τ²-bench, AppWorld, ToolSandbox, and the broader transactional
-tool-agent family (CRM, booking, inventory/ERP, SQL/data, form and workflow
-automation). Out of scope: **unstructured-state, bespoke-oracle** tasks, canonically
-real-world SWE (codebase state, free-form patch, hand-written tests, no
-semantics-preserving resampler), which is exactly why coding benchmarks (SWE-rebench,
-LiveCodeBench) get freshness by *mining* new tasks rather than regenerating old ones.
-The boundary is not "code": parametric algorithmic coding with an executable
-reference solution is regeneratable; repo-level SWE is not.
+Precondition 5 is what a "database-shaped" reading misses, and it redraws the boundary:
+
+- **IN** (all five; interactive, state-equivariant): **τ-bench, AppWorld, WorkArena** — the
+  agent emits a *state-specific action trajectory* graded by re-executing a reference against
+  the regenerated state.
+- **Single-turn degenerate** (cite, do not claim): DyVal, GSM-Symbolic — scored answer
+  co-varies, but static reasoning, not interactive state.
+- **OUT on precondition 5** (pass 1–4, fail 5): **text-to-SQL** (scored artifact is the SQL
+  query, a state-*general* program, invariant to row regeneration) and **competitive coding**
+  (scored artifact is code, input-invariant; and there the input distribution *is* the
+  difficulty). These are only evergreen-able via *problem*-regeneration, not ours.
+- **OUT earlier**: repo-level SWE (fail 1–4: unstructured state, bespoke tests); MMLU (fail 3:
+  stored key = lookup); Chatbot Arena (fail 3: judgment oracle).
+
+The clean test is MMLU vs GSM-Symbolic: both are single-answer QA, but GSM-Symbolic carries a
+*re-runnable solution procedure* while MMLU carries only a *key*. Presence of a re-runnable
+reference is the boundary between computation and lookup; precondition 5 is the boundary
+between computation-that-co-varies and computation-that-doesn't.
 
 ## Motivation: contamination is a recognized, cross-benchmark problem
 
@@ -341,7 +374,7 @@ wrong axis. Disambiguate the n's:
 | n | Want it | Cost | Why |
 |---|---|---|---|
 | generated instances (soundness audit) | **large** | **free** (no model calls) | correctness is shown over the generator's whole output; being able to get this for free is the point |
-| benchmarks the recipe is applied to | **2+** | moderate | this is what makes it a *method* not a benchmark; τ-bench **and** AppWorld beats 20 models on τ-bench |
+| benchmarks the recipe is applied to | **2+, one independent** | moderate | makes it a *method*; τ-bench (retail+airline) is one family, so the second must be independent (WorkArena) — two τ-bench domains don't count |
 | models / harnesses evaluated | **small** | compute | the empirical section is an existence proof, not a population study |
 | trials per instance | small–moderate | compute | enough for a `pass^k` illustration and one paired comparison |
 | instances per class in the demo | argued, not run large | analytic | prove the static set is underpowered; supply, don't survey |
@@ -368,20 +401,32 @@ wrong axis. Disambiguate the n's:
    Report `pass^k` with CIs stratified by difficulty class, and quantify the
    variance reduction from paired seeds vs independent sampling (McNemar). Small-n
    by design: flip *one* comparison, don't survey many.
-5. **Contamination gap (compute, supporting only).** Original vs regenerated on one
-   model; report whether it fires. Not load-bearing: if null, the benchmark is
-   renewable regardless. A *non-null* drop is also not by itself memorization (Recht's
-   ImageNet-v2 drop was harder-reconstruction, not adaptivity); isolate it with a
-   rank-preservation / gap-decomposition analysis. Optionally ablate a suspected
-   generator shortcut to separate instance-memorization, distribution-overfit, and
-   genuine competence.
+5. **The cross-class boundary experiment (compute, THE empirical contribution).** This is
+   what the fan-out surfaced and what codex says the paper survives on: don't just show a
+   contamination gap on τ-bench, *map the boundary*. Memorize a static baseline, then show
+   the gap **fires on the equivariant classes** (τ-bench, WorkArena: scored trajectory
+   co-varies) and **stays null on the invariant ones** (text-to-SQL, competitive coding:
+   scored artifact is a state-general program). That double result is precondition 5
+   validated empirically, and no one has drawn this boundary for benchmark regeneration.
+   Caveats: a null gap on the OUT side is the *predicted* result (not a failure); on the IN
+   side, a non-null gap is not automatically memorization (Recht's ImageNet-v2 drop was
+   harder-reconstruction) — isolate with rank-preservation / gap-decomposition.
+
+6. **Independent second demonstration: WorkArena, with a circularity guard.** WorkArena
+   ships `setup()`/`cheat()`/`validate()`, so a lazy "call their hooks" demo proves nothing.
+   The non-circular version must: regenerate state *beyond* the released fixed configs,
+   re-run the independent `cheat()`/reference to derive the oracle on the *new* state, and
+   show a memorization baseline collapses while a capable agent still solves. Only-shipped-
+   seeds = weak. This is the independent, non-τ-bench point the two τ-bench domains cannot be.
 
 ### The guardrail: more than a position paper, not a study
 
-Minimum to clear codex's "position paper" bar without a large empirical study: a
-working generator (have it), the soundness audit (step 3), **two** benchmark
-instantiations (step, open: add AppWorld), and one illustrative eval (step 4). The
-explicit τ²-bench oracle-code comparison remains the blocking novelty check.
+Minimum to clear codex's "position paper" bar without a large empirical study: the working
+schema-agnostic generator (have it, τ-bench retail+airline), the soundness audit (step 3),
+one **independent** second instantiation (WorkArena, step 6 — *not* just a second τ-bench
+domain), and the cross-class boundary experiment (step 5), which is the thing that makes it
+a method and not "known machinery applied to τ-bench." The explicit τ²-bench oracle-code
+comparison remains the blocking novelty check.
 
 ## Risks and honest limits
 
