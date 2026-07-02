@@ -196,6 +196,54 @@ orderings) before hashing. This is the same task-quality risk τ-bench already h
 promoted to a first-class requirement because the generator must guarantee it across
 its whole output distribution, not per hand-checked instance.
 
+## Design lineage: procedural content generation in games
+
+This method is procedural content generation (PCG) applied to benchmarks. Games have
+solved the same problems for decades and the mapping is exact enough to borrow both
+framing and technique (sources: Togelius/Shaker/Nelson PCG book; Togelius et al. 2011
+search-based taxonomy; Smith & Mateas ASP; Karth & Smith WFC; Smith & Whitehead
+expressive range; Cobbe et al. ProcGen/CoinRun; Kazemi's Spelunky Generator Lessons).
+
+- **Seed determinism = reproducible + fresh.** A seed fully determines the content, so
+  the same seed reproduces an instance and a new seed yields a fresh one. Dwarf
+  Fortress is the cautionary case: geography is seed-reproducible but history diverges
+  when generation is not strictly seed-pure, the exact failure our determinism test
+  guards against.
+- **Daily-challenge seeds = decontamination + paired eval.** Spelunky and Slay the
+  Spire issue one server-gated seed per day, identical for everyone, not available in
+  advance. That is our protocol precisely: reveal the seed at eval time (un-rehearsable,
+  so contamination-resistant) and run every system on the same seed (paired comparison).
+- **Train/test seed split = memorization meter.** ProcGen and CoinRun train on a finite
+  seed set and test on held-out seeds; "the gap between train and test performance
+  determines the extent of overfitting" (CoinRun), tested zero-shot with no fine-tuning.
+  This is our memorization measurement, and CoinRun's finding that overfitting persists
+  until thousands of training levels is a quantitative anchor for required generator width.
+- **Solvability guarantees = our solvability audit.** Games keep levels completable three
+  ways: build-by-construction (Spelunky's solution path, Brogue's accretion tree),
+  generate-and-test-and-reject (simulate a reference solver, regenerate on failure), and
+  constraint-solver enumeration (ASP). **Our replay oracle is the reference-solver route:
+  replaying the golden both certifies the instance is answerable and produces the grader,
+  in one pass.** Warning inherited from Wave Function Collapse (Karth & Smith): local /
+  per-field constraints do not imply global solvability, so a constraint-preserving
+  resampler still needs a whole-task check (the golden replay), not just valid fields.
+- **Expressive-range analysis = generator-width / anti-shortcut instrument.** Smith &
+  Whitehead measure a generator's output distribution on emergent metrics kept
+  *independent of the generation parameters*, then plot it to expose bias, thin coverage,
+  or a clustered region a solver could exploit. This is the compute-free way to
+  substantiate the "wide enough that no shortcut survives" claim: generate thousands of
+  instances, score emergent difficulty/structure, inspect the distribution.
+- **Constraint-based generation = structural regeneration.** ASP design spaces (Smith &
+  Mateas) and mission/space grammars (Dormans) regenerate the scaffold under declared
+  constraints rather than perturbing surface tokens, the model for structural (not
+  cosmetic) task regeneration.
+
+Two borrows to carry into the writeup: the replay oracle is the PCG reference-solver
+solvability certificate doubling as the grader, and expressive-range analysis is a
+ready-made, compute-free proof of generator coverage. (Flags from the sweep: Spelunky's
+guarantee is constructive, not a digging solver; expressive-range quotes are from Smith's
+dissertation, not the paywalled workshop paper; daily-mode exact wording came via search
+summaries.)
+
 ## Novelty: honest position
 
 Every component exists. The contribution is the synthesis, formalization, and

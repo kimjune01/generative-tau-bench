@@ -58,20 +58,31 @@ def test_no_original_ids_leak():
             assert not gleaked, f"task {ti} seed {seed}: golden references stale ids: {gleaked}"
 
 
-def test_golden_solves_cleanly():
-    """The re-keyed golden must replay on the re-keyed DB with no tool errors, and
-    reach exactly its own oracle (determinism)."""
+def test_rekey_preserves_error_pattern():
+    """Faithfulness, checked over the WHOLE retail suite (not a sample).
+
+    Re-keying must not change WHICH golden actions error. Some tau-bench goldens
+    include exploratory reads that legitimately return 'not found' in the original
+    (19/115 retail tasks); a faithful re-key preserves that pattern exactly,
+    position-for-position. A plain 'no errors' check is wrong: it flags those benign
+    reads and only passed earlier by sampling task indices that happened to lack
+    them. Also checks the golden reaches its own oracle (determinism)."""
+    import copy
+    base = _base_retail_data()
     tasks = _base_retail_tasks()
-    for ti in TASK_INDICES:
+
+    def err_pattern(golden, data):
+        d = copy.deepcopy(data)
+        return [str(apply_action(d, a)).startswith("Error") for a in golden]
+
+    for ti, task in enumerate(tasks):
+        orig = [Action.from_tau(a) for a in task.actions]
+        op = err_pattern(orig, base)
         for seed in SEEDS:
-            inst = generate_from_task(tasks[ti], seed)
-            import copy
-            data = copy.deepcopy(inst.data)
-            for a in inst.golden:
-                obs = apply_action(data, a)
-                assert not str(obs).startswith("Error"), (
-                    f"task {ti} seed {seed}: golden action {a.name} errored: {obs}"
-                )
+            inst = generate_from_task(task, seed, base_data=base)
+            assert err_pattern(inst.golden, inst.data) == op, (
+                f"task {ti} seed {seed}: re-key changed the error pattern"
+            )
             assert oracle_hash(inst.golden, inst.data) == inst.oracle
 
 
