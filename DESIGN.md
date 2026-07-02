@@ -1,7 +1,88 @@
 # Generative τ-bench
 
-A seeded, replay-oracle extension of τ-bench for contamination-resistant,
-statistically honest tool-agent evaluation. Design note and paper plan.
+A *method* for converting a database-shaped tool-agent benchmark into an evergreen,
+contamination-resistant one, via seeded regeneration plus a replay-derived oracle.
+τ-bench is the case study and existence proof, not the product. Design note and
+paper plan.
+
+## Contribution (crystallized)
+
+> A reusable transformation for **database-shaped stateful tool-agent benchmarks**
+> that combines seeded, constraint-preserving regeneration of each instance with a
+> **replay-derived final-state oracle**, so fresh instances *and their graders*
+> re-derive from a seed with no re-annotation and no mining of new real tasks.
+
+The framing is a method, not a benchmark. That matters strategically (a recipe gets
+cited even when a given instantiation is not adopted) and it sets the bar: the
+transformation should be shown on more than one benchmark (τ-bench plus AppWorld or
+ToolSandbox) so it reads as a method, not a single benchmark in method's clothing.
+
+Lead with the words that are unconditionally true, **evergreen, reproducible,
+difficulty-controlled, paired**; treat *contamination-resistant* as a corollary of
+evergreen-with-seed-rotation, not as the headline (it carries an empirical burden a
+null gap cannot discharge; see Risks).
+
+## Domain of validity (the applicability theorem)
+
+The recipe applies iff a task satisfies all four preconditions:
+
+1. **State is enumerable typed entities with ids** (a relational DB, not free text).
+2. **The solution is a program over those entities**, so it transforms under the
+   same seeded re-key the state does.
+3. **The oracle is a deterministic function of the final state** (replay-checkable),
+   not a bespoke artifact.
+4. **A constraint-preserving resampler exists** (vary contents without breaking
+   solvability).
+
+In scope: τ-bench, τ²-bench, AppWorld, ToolSandbox, and the broader transactional
+tool-agent family (CRM, booking, inventory/ERP, SQL/data, form and workflow
+automation). Out of scope: **unstructured-state, bespoke-oracle** tasks, canonically
+real-world SWE (codebase state, free-form patch, hand-written tests, no
+semantics-preserving resampler), which is exactly why coding benchmarks (SWE-rebench,
+LiveCodeBench) get freshness by *mining* new tasks rather than regenerating old ones.
+The boundary is not "code": parametric algorithmic coding with an executable
+reference solution is regeneratable; repo-level SWE is not.
+
+## Motivation: contamination is a recognized, cross-benchmark problem
+
+The premise is not assumed; it is documented across position papers, audits, and the
+benchmark builders themselves (citations verified from primary sources 2026-07-01
+unless flagged).
+
+*It is a field-wide validity threat.* Sainz et al. (2310.18018): "Contamination
+causes an overestimation of the performance of a contaminated model ... The
+consequences can be very harmful, with wrong scientific conclusions being published
+while other correct ones are discarded." Balloccu et al. (EACL 2024, 2402.03927)
+quantify the scale: across 255 papers, closed models "have been globally exposed to
+~4.7M samples from 263 benchmarks."
+
+*The inflation is measured, not hypothetical.* Zhang et al.'s GSM1k (2405.00332), a
+freshly authored twin of GSM8k, found "accuracy drops of up to 8%, with several
+families of models showing evidence of systematic overfitting," correlated (Spearman
+r² = 0.36) with a model's propensity to regenerate GSM8k examples (they note frontier
+models show minimal overfitting). Deng et al. (2311.09783) found GPT-4 could guess
+masked MMLU answer options 57% of the time (ChatGPT 52%). Xu et al. (2404.18824)
+found "substantial" test-set misuse across 31 LLMs on mathematical reasoning.
+
+*Benchmark makers cite it as their reason to build.* LiveBench (2406.19314): "Test
+set contamination ... is a well-documented obstacle for fair LLM evaluation and can
+quickly render benchmarks obsolete," so it refreshes questions monthly.
+LiveCodeBench (2403.07974) is "contamination-free" by "continuously collect[ing] new
+problems over time." SWE-rebench (swe-rebench.com/about): "models released after this
+date may have seen these exact issues or highly similar data during training." OpenAI
+stopped reporting SWE-bench Verified partly because open, widely-discussed repos make
+"avoiding contamination difficult for model developers" (the widely-cited audit
+figures, ~59% flawed items, 80%→~23% drops, come from secondary reporting; the
+official page 403s to automated fetch and is unverified here).
+
+*Agent benchmarks are not exempt, and neither is a clean-at-release one.* Whether
+scraped-but-timestamped (SWE-rebench) or fully synthetic (τ-bench, 2406.12045, users
+"simulated by language models"), a static public benchmark decays as its gold data
+ages past successive training cutoffs. (That τ-bench's public goldens age into cutoffs
+is an inference from its being public and static, not a Sierra claim.)
+
+This is the case for contamination-resistance that is *structural* rather than a
+matter of timing, which is what regeneration provides.
 
 ## Thesis
 
@@ -33,9 +114,10 @@ Three things age badly, and all three are consequences of the instances being
    corpus, so contamination was near zero by construction. It grows monotonically
    as the public repo ages into successive training cutoffs. The leak is a function
    of the repo's age, not its design. Compare the SWE-bench arc: SWE-bench Verified
-   filtered out 68.3% of samples for quality, and OpenAI later retired it after
-   finding 59.4% of a persistently-failed subset were broken or contaminated.
-   Static open benchmarks decay.
+   filtered out ~68% of samples for quality, and OpenAI later stopped reporting it,
+   citing contamination among the reasons (the widely-cited audit percentages are
+   from secondary reporting; the primary page is unverified here). Static open
+   benchmarks decay.
 2. **Too small for error bars.** 115 retail + 50 airline test tasks, with
    `pass^k` reported as a point and no CIs. `pass^8` at the frontier rides on a
    near-binary per-task estimator over ~50 tasks.
@@ -116,22 +198,37 @@ its whole output distribution, not per hand-checked instance.
 
 ## Novelty: honest position
 
-Every component exists. The contribution is the synthesis and the receipts, not a
-new primitive, and the paper is only real if it is built and measured.
+Every component exists. The contribution is the synthesis, formalization, and
+receipts, not a new primitive, and the paper is only real if it is built and
+measured. A dedicated method-level prior-art sweep is in [`PRIOR_ART_METHOD.md`](PRIOR_ART_METHOD.md)
+(citations verified 2026-07-01); its verdict is folded in below.
+
+**As a broad claim ("make benchmarks dynamic/evergreen/contamination-resistant"),
+this is not novel** and would be rejected as subsumed. The dynamic-evaluation-as-a-
+*method* ground is already held by DyVal (2309.17167), DyVal 2 / Meta Probing Agents
+(2402.14865), Benchmark Self-Evolving (2402.11443), and metamorphic-testing work,
+plus GSM-Symbolic/GSM-SEM (template regen), LiveBench/LiveCodeBench/SWE-rebench
+(mining freshness), AntiLeakBench, and ProcGen (seeded procedural + seed splits).
 
 | Component | Prior art | Novelty |
 |---|---|---|
 | Replay-and-hash oracle | τ-bench | none, we keep it |
 | Regenerate not hide | GSM-Symbolic, GSM-SEM, LiveBench, LiveCodeBench, AntiLeakBench | low; underdeveloped for relational tool worlds |
-| Seeded procedural instances | ProcGen, ProcTHOR, Avalon | none in RL, derivative for agents |
-| Train/test seed split | ProcGen | none, good to include |
+| Dynamic-eval as a general transformation | DyVal, DyVal 2 / Meta Probing Agents, Benchmark Self-Evolving, metamorphic testing | none; but all transform *text/reasoning* problems, none the stateful tool-world |
+| Seeded procedural instances + train/test seed split | ProcGen, ProcTHOR, Avalon | none in RL, derivative for agents |
 | Shared-seed paired eval | common random numbers, McNemar, PaCoST | none statistically, underused in agent benchmarks |
-| Replay oracle + seeded regeneration for stateful tool-agent DBs | τ²-bench is nearest | medium; no exact prior instance found |
+| **Replay oracle + seeded regeneration for database-shaped tool-agent benchmarks** | τ²-bench is nearest | **medium; no exact prior instance found** |
 
-The defensible claim, to our knowledge: *no published LLM agent benchmark uses a
-public seeded generator to regenerate both a stateful tool-world instance and its
-replay-derived oracle, enabling fresh contamination-resistant evaluation without
-hidden goldens.* Keep "to our knowledge" until a deeper sweep is done.
+**The defensible delta** (why DyVal-style dynamic evaluation does not subsume it):
+DyVal and kin transform *problem statements* and rely on generated answers, judge
+models, or symbolic derivation; they do not produce a **replay-derived final-state
+oracle** for a *mutating tool world*. Stated for a paper, to our knowledge:
+
+> For database-shaped stateful tool-agent benchmarks, a transformation that
+> seeded-regenerates both the initial world and the canonical solution program, then
+> derives each fresh grader by replaying that program on the regenerated world.
+
+Keep "to our knowledge" until the sweep is re-run at submission.
 
 ### The delta versus τ²-bench, which is where novelty lives or dies
 
@@ -149,35 +246,91 @@ protocol contributions, not mechanism.
 Most likely to scoop this: the τ-bench / τ² authors, who own the franchise and have
 the generator direction already.
 
-## Evaluation plan (the bar the paper must clear)
+## What we must prove, and the n it takes
 
-1. **Invariance.** Show id re-keying preserves task semantics: for N classes, the
-   re-keyed golden replays to the re-keyed expected state, and agent success is
-   invariant to the seed under a fixed model, within sampling error.
-2. **Solvability guarantee.** Show the generator emits only solvable,
-   policy-consistent tasks across its whole output distribution (the generative
-   analog of the SWE-bench Verified solvability filter). Report any invalid-instance
-   rate and drive it to zero.
-3. **Contamination sensitivity.** Fine-tune or few-shot a model on train-seed
-   goldens, then show high train-seed accuracy and lower held-out-seed accuracy. If
-   the gap is null, the memorization meter is only asserted.
-4. **Paired statistics.** Same seeds across models; report paired CIs and McNemar,
-   and quantify variance reduction versus independent-seed sampling.
-5. **Generator audit.** Ablate suspected shortcuts (break a tell, watch for
-   collapse) to separate seed memorization, generator-distribution overfit, and
-   genuine competence.
-6. **Reliability curves with bars.** Report `pass^k` with CIs, stratified by
-   difficulty class, which the generator now controls by construction.
+This is a mechanism paper. The load-bearing usefulness claim is **not**
+"we detect contamination" (cosmetic re-key is near-inert against semantic
+contamination and a null gap is ambiguous; see Risks). It is: **the replay oracle
+turns freshness from a per-instance cost into a fixed cost, which makes powered,
+paired, evergreen measurement possible where mining and templating can't reach.**
+Contamination-resistance follows *structurally* (evergreen by construction, seed
+rotation), it is not the thing we stake on an experiment.
+
+A mechanism proof is closer to correctness than to statistics, so "large n" is the
+wrong axis. Disambiguate the n's:
+
+| n | Want it | Cost | Why |
+|---|---|---|---|
+| generated instances (soundness audit) | **large** | **free** (no model calls) | correctness is shown over the generator's whole output; being able to get this for free is the point |
+| benchmarks the recipe is applied to | **2+** | moderate | this is what makes it a *method* not a benchmark; τ-bench **and** AppWorld beats 20 models on τ-bench |
+| models / harnesses evaluated | **small** | compute | the empirical section is an existence proof, not a population study |
+| trials per instance | small–moderate | compute | enough for a `pass^k` illustration and one paired comparison |
+| instances per class in the demo | argued, not run large | analytic | prove the static set is underpowered; supply, don't survey |
+
+### The proof ladder (cheapest and most decisive first)
+
+1. **Power argument (compute-free).** Show analytically that the static benchmark
+   cannot resolve realistic effect sizes: at n=115 retail the binomial SE makes a
+   5–8 point harness gap non-significant; state the n actually required. Proves
+   *necessity* of more instances before any model runs.
+2. **Cost accounting (compute-free).** Quantify the unique benefit: the generator
+   emits M graded instances for *zero annotations* because the oracle re-derives by
+   replay; mining needs a pipeline, templated QA needs per-variant answer keys,
+   hand-authoring needs graders. Fixed-cost-high, marginal-cost-zero. Proves
+   *uniqueness*, and is the direct answer to "why the extra complexity."
+3. **Soundness (large-but-free).** Over thousands of generated instances: injective
+   re-key, coverage (no original id leaks), clean solvability (golden replays with
+   no tool errors), determinism (same seed → same oracle), and an audited
+   invalid-instance rate driven to ~0. This is property/correctness evidence, not
+   sampled estimates. (Core already passing in `tests/`.)
+4. **Impact demo (small compute, the money shot).** Show the mechanism *changes a
+   conclusion*: a harness A-vs-B comparison that is tied or misleading on static
+   τ-bench resolves or flips under powered, same-seed-paired generative evaluation.
+   Report `pass^k` with CIs stratified by difficulty class, and quantify the
+   variance reduction from paired seeds vs independent sampling (McNemar). Small-n
+   by design: flip *one* comparison, don't survey many.
+5. **Contamination gap (compute, supporting only).** Original vs regenerated on one
+   model; report whether it fires. Not load-bearing: if null, the benchmark is
+   renewable regardless. Optionally ablate a suspected generator shortcut to
+   separate instance-memorization, distribution-overfit, and genuine competence.
+
+### The guardrail: more than a position paper, not a study
+
+Minimum to clear codex's "position paper" bar without a large empirical study: a
+working generator (have it), the soundness audit (step 3), **two** benchmark
+instantiations (step, open: add AppWorld), and one illustrative eval (step 4). The
+explicit τ²-bench oracle-code comparison remains the blocking novelty check.
 
 ## Risks and honest limits
 
+- **Cosmetic re-keying may be near-inert against the contamination that exists here
+  (the sharpest risk).** In tau-bench every id the golden needs is *discoverable
+  in-context* via tool calls, so a contaminated model never had to memorize an id
+  from weights. What it memorizes is the *resolution path*: the policy branch, the
+  conditional fallback, the intended end-state. Re-keying preserves all of that
+  byte-for-byte (same products, prices, structure, policy branch), so it defeats a
+  threat model that barely exists. The real signal lives entirely in **structural
+  regeneration** (resampling contents under class constraints), which is unbuilt.
+  Corollary: a null memorization-gap could be *structural* (re-key blind to semantic
+  contamination), not evidential. Treat cosmetic re-key as the substrate for
+  structural regeneration, not as a contamination defense on its own.
+- **The user simulator is central, not orthogonal, and the MVP has a construct-
+  validity break.** A tau-bench `instruction` is the *user simulator's* script,
+  carrying private conditional intent the agent must ELICIT over dialogue. Handing it
+  straight to the agent (the current `user_sim=None` path) leaks the answer sheet, so
+  those runs measure an easier task and are NOT tau-bench-comparable (`eval.py` now
+  marks them `comparable=False`). A faithful number needs a `UserSim` (LLM, or a
+  deterministic scripted user that reveals intent only when asked); the hook exists,
+  no implementation ships.
+- **CLI agents measure product, not model.** `claude -p` / `codex exec` wrap a model
+  in a coding-agent scaffold with its own prompt and loop, and cannot be fine-tuned
+  (which forecloses the memorization-meter experiment). Use them only for a labeled
+  demo. Any published model-competence number should use an API tool-calling agent
+  (tau-bench ships one). Whether the goal is *model* competence or *CLI-product*
+  competence is an open decision that drives this.
 - **Authoring cost is the real labor.** Regeneration saves per-instance annotation,
   not per-class design. Width equals authored classes. LLM-authoring classes to
   scale reintroduces the solvability audit on machine-made templates.
-- **User-simulator noise is orthogonal and unfixed here.** The reward's validity
-  still depends on an LLM user simulator conveying intent faithfully. Regeneration
-  cleans the grading-side leak, not the input-side noise. "No contamination" is
-  earned; "all rigor" needs a tightened or verified user sim too.
 - **Distribution overfit persists.** Regeneration kills instance memorization, not
   overfitting to a narrow generator. ProcGen shows this empirically. Mitigate with
   width, held-out task families, and seed rotation.
