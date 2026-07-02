@@ -244,6 +244,37 @@ guarantee is constructive, not a digging solver; expressive-range quotes are fro
 dissertation, not the paywalled workshop paper; daily-mode exact wording came via search
 summaries.)
 
+## Cross-domain convergence and the oracle ladder (the spine)
+
+Four fields independently beat memorization the same way, by generating fresh tests,
+and they differ mainly in *how they label a generated instance*. That difference is
+the whole argument.
+
+| Oracle | Example | What you get | Cost / limit |
+|---|---|---|---|
+| **Constructive (generation = grading)** | domain randomization, class-conditional render (vision); **our replay oracle** | the graded answer, free, unlimited | only where the answer is a byproduct of generation |
+| Human re-annotation | Recht ImageNet-v2, ObjectNet | ground truth | expensive, one-shot, not renewable |
+| Metamorphic relation | DeepTest, ImageNet-C corruptions | a *consistency* constraint, not a label | needs a seed with a known label; bounds deviation, doesn't grade |
+| Cross-reference vote | DeepXplore | a disagreement flag | can't say who is right; fails on shared blind spots |
+
+The fresh-test trick is old and universal (games PCG, RL generalization ProcGen/
+CoinRun, vision Recht/ObjectNet, software DeepTest/DeepXplore). The *top rung*
+("generation is grading") is only available where the answer falls out of generation.
+Vision reaches for metamorphic or vote oracles precisely when it cannot render the
+label; LLM-QA refresh work (DyVal, Recht-style) pays for the label or derives it
+symbolically; mining (LiveBench/SWE-rebench) sidesteps generation entirely. **Stateful
+tool-agent tasks are the corner of LLM evaluation where the top rung is reachable,
+because replaying the golden emits the (instance, grade) pair together.** That is the
+port, and why it is new: not a new trick, the strongest-oracle trick applied where it
+was newly available. Every "that is just DyVal / ProcGen / τ²" objection is answered by
+one sentence: none of them had a constructive, replay-derived oracle over a mutating
+tool world.
+
+Honest hedge (Recht): a score drop on a fresh set is necessary but not sufficient
+evidence of memorization. Recht found the ImageNet-v2 drop was harder-reconstruction,
+not adaptivity (ranking preserved, gains transferred). A contamination claim needs a
+rank-preservation / gap-decomposition analysis, not just a drop.
+
 ## Novelty: honest position
 
 Every component exists. The contribution is the synthesis, formalization, and
@@ -339,8 +370,11 @@ wrong axis. Disambiguate the n's:
    by design: flip *one* comparison, don't survey many.
 5. **Contamination gap (compute, supporting only).** Original vs regenerated on one
    model; report whether it fires. Not load-bearing: if null, the benchmark is
-   renewable regardless. Optionally ablate a suspected generator shortcut to
-   separate instance-memorization, distribution-overfit, and genuine competence.
+   renewable regardless. A *non-null* drop is also not by itself memorization (Recht's
+   ImageNet-v2 drop was harder-reconstruction, not adaptivity); isolate it with a
+   rank-preservation / gap-decomposition analysis. Optionally ablate a suspected
+   generator shortcut to separate instance-memorization, distribution-overfit, and
+   genuine competence.
 
 ### The guardrail: more than a position paper, not a study
 
