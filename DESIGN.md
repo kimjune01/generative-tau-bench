@@ -1,9 +1,16 @@
 # Generative τ-bench
 
-A *method* for converting a database-shaped tool-agent benchmark into an evergreen,
-contamination-resistant one, via seeded regeneration plus a replay-derived oracle.
-τ-bench is the case study and existence proof, not the product. Design note and
-paper plan.
+**Thesis.** If a benchmark's tasks are the kind where regenerating the state changes the
+correct answer *through the skill being measured* (skill-bearing state equivariance), and
+the generator stays representative of the target task (construct validity), then seeded
+procedural generation extends the benchmark's useful life indefinitely — turning a
+depreciating asset (a fixed test set that saturates and leaks on a ~1–2 year clock) into a
+renewable one.
+
+A *method*, not a benchmark: a reusable transformation that regenerates an interactive
+environment's state from a seed and re-derives the grader by replaying a canonical reference
+against it, so fresh instances *and their oracles* come for free. τ-bench is the validated
+case study and existence proof, not the product. Design note and paper plan.
 
 ## Contribution (crystallized)
 
