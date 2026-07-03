@@ -35,6 +35,21 @@ Reality check from authoring: the easy variant-availability well is nearly dry.
   return: retail 76, 88, 91, 30, 57, 89), which pivot on variant availability (already
   supported) but need `patch` functions to reshape the golden per branch — the CatalogBranchSpec
   `patch` hook (used by task 1) covers this; no new resampler axis needed for 30.
+- **+1 more (→ 25) and the availability-only boundary.** Added retail 91 (e-reader
+  self-exchange vs return, action-flip via `patch`; non-shipped return branch reconstructed
+  from unambiguous intent; validated clean). ATTEMPTED retail 88 (bookshelf modify-vs-cancel)
+  but DROPPED it: the primary (modify to the 4ft glass-white bookshelf, $531.22) is not
+  solvable-by-construction — the owned 5ft is $504.65 and the order's gift card holds only
+  $19, so the +$26.57 price step fails ("insufficient gift card balance"). Forcing the variant
+  *available* is not enough; the branch also needs *price/payment* control the `World`
+  mechanism (availability flags only) doesn't have. Ships infeasible → refused.
+  This is the real edge: the remaining candidates to 30 all hit the same wall —
+  payment/price constraints (88, 20, 40), price resamples (89, 64), order-field pivots
+  (57, 82, 83), degenerate branches (52, 77, 71, 72), or reconstruction ambiguity (76, 30).
+  So availability-only faithfully tops out around 25. Reaching 30 cleanly needs a modest
+  extension: **price overrides in `World`** (a `prices` map alongside `avail`), which unlocks
+  the payment/price-constrained tasks (88 with an affordable resampled price, 20, 40, 89, 64).
+  Defined next step, not a grind — flagged for the user rather than shipping faithless specs.
 
 ## 2026-07-03 (cont.) — step-4 impact demo: Fable design review before spending compute
 

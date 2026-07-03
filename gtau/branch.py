@@ -746,6 +746,40 @@ RETAIL_99 = _jigsaw_theme_spec(99, ["6245746168", "5546244844"], "6245746168")
 RETAIL_100 = _jigsaw_theme_spec(100, ["5546244844", "6245746168"], "5546244844")
 
 
+# --- retail task 91: e-reader self-exchange if available online, else return -----------
+
+_EREADER = "3801771308"
+
+
+def _task91_patch(actions: List[Action], target: Optional[str], data: Dict[str, Any]) -> List[Action]:
+    """Shipped golden IS the primary (self-exchange of the owned e-reader 9494281769,
+    which ships available). When forced unavailable, return it instead. The first leg
+    (returning the two skateboards in #W7553978) is invariant."""
+    if target is not None:
+        return actions
+    return actions[:-1] + [Action("return_delivered_order_items", {
+        "order_id": "#W3239882",
+        "item_ids": ["9494281769"],
+        "payment_method_id": "credit_card_5902940",
+    })]
+
+
+RETAIL_91 = CatalogBranchSpec(
+    domain="retail",
+    base_task_index=91,
+    worlds=[
+        World("exchange", {}),                                                           # == shipped (9494281769 available)
+        World("return", {(_EREADER, "9494281769"): False}),
+    ],
+    selector=FirstAvailable(_EREADER, ["9494281769"], none_ok=True),
+    shipped_branch="exchange",
+    labels={"9494281769": "exchange", None: "return"},
+    patch=_task91_patch,
+    notes="branch flips the action: e-reader available online -> self-exchange (shipped); "
+          "else return in #W3239882. Non-shipped (return) branch reconstructed from intent",
+)
+
+
 BranchSpec = Union[ExchangeBranchSpec, CatalogBranchSpec]
 
 BRANCH_SPECS: Dict[str, BranchSpec] = {
@@ -773,6 +807,7 @@ BRANCH_SPECS: Dict[str, BranchSpec] = {
     "retail:60": RETAIL_60,
     "retail:99": RETAIL_99,
     "retail:100": RETAIL_100,
+    "retail:91": RETAIL_91,
 }
 
 
