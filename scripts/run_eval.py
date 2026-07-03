@@ -5,9 +5,13 @@ NOT run in the build session (it spawns the CLI agent). Usage:
 
     python scripts/run_eval.py --agent claude --task 0 --trials 8
     python scripts/run_eval.py --agent codex  --task 0 --trials 8 --seed-base 1000
+    python scripts/run_eval.py --agent claude --task 0 --branch --user-sim claude --trials 4
 
 Same seed set is used across agents in a round, so comparisons are paired
-(common random numbers). See DESIGN.md.
+(common random numbers). Without --user-sim the instruction is handed to the agent
+(intent leak): runs are marked comparable=False and are NOT tau-bench-comparable.
+--branch draws instances from the branch-selection spec (gtau/branch.py) instead of
+cosmetic re-keying. See DESIGN.md.
 """
 from __future__ import annotations
 import argparse
@@ -17,12 +21,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from gtau.generate import generate
+from gtau.branch import BRANCH_SPECS, generate_branch_instance
 from gtau.eval import run_episode
 from gtau.metrics import pass_hat_k, pass_at_k
 from gtau.adapters.cli_agent import claude_adapter, codex_adapter
 from gtau.domains import DOMAINS
+from gtau.usersim import CLIUserSim
 
 AGENTS = {"claude": claude_adapter, "codex": codex_adapter}
+SIM_ARGV = {"claude": ["claude", "-p"], "codex": ["codex", "exec"]}
 
 
 def main() -> None:
@@ -34,6 +41,11 @@ def main() -> None:
     ap.add_argument("--seed-base", type=int, default=0)
     ap.add_argument("--max-steps", type=int, default=30)
     ap.add_argument("--timeout", type=int, default=300)
+    ap.add_argument("--branch", action="store_true",
+                    help="branch-selection instances instead of cosmetic re-key")
+    ap.add_argument("--user-sim", choices=list(SIM_ARGV), default=None,
+                    help="mediate via a CLI user simulator (comparable=True)")
+    ap.add_argument("--verbose", action="store_true", help="print the transcript per trial")
     args = ap.parse_args()
 
     domain = DOMAINS[args.domain]
@@ -42,11 +54,20 @@ def main() -> None:
     successes = 0
     for t in range(args.trials):
         seed = args.seed_base + t
-        inst = generate(domain, args.task, seed)
-        res = run_episode(agent, inst, tools, max_steps=args.max_steps)
+        if args.branch:
+            spec = BRANCH_SPECS[f"{args.domain}:{args.task}"]
+            inst = generate_branch_instance(spec, seed)
+        else:
+            inst = generate(domain, args.task, seed)
+        sim = CLIUserSim(inst.instruction, SIM_ARGV[args.user_sim]) if args.user_sim else None
+        res = run_episode(agent, inst, tools, max_steps=args.max_steps, user_sim=sim)
         successes += int(res.success)
+        branch = f" branch={inst.branch}" if args.branch else ""
         print(f"  seed={seed} success={res.success} r_state={res.r_state} "
-              f"r_outputs={res.r_outputs}")
+              f"r_outputs={res.r_outputs} comparable={res.comparable}{branch}")
+        if args.verbose:
+            for turn in res.transcript:
+                print(f"    [{turn['role']}] {turn['content'][:160]}")
 
     spt = {args.task: successes}
     n = args.trials

@@ -11,8 +11,8 @@ clicky keyboard, you'd rather only exchange the thermostat"). Handing it straigh
 the agent (the default `user_sim=None` path here) leaks that intent. Such runs are an
 EASIER task than tau-bench and are NOT comparable to tau-bench numbers:
 `EpisodeResult.comparable` is False. A faithful run needs a `UserSim` (LLM or scripted)
-that holds the instruction and answers only what the agent asks; the `user_sim` hook
-is provided but no implementation ships yet.
+that holds the instruction and answers only what the agent asks; `usersim.CLIUserSim`
+ships one, mirroring tau-bench's simulator prompt over a local CLI model.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -22,6 +22,7 @@ from .action import Action
 from .generate import Instance
 from .world import World
 from .adapters.base import AgentAdapter, TaskView
+from .usersim import is_stop
 
 RESPOND = "respond"
 STOP = "stop"
@@ -85,6 +86,8 @@ def run_episode(
             reply = user_sim.reply(content) if user_sim else "(ok)"
             transcript.append({"role": "agent", "content": f"respond: {content}"})
             transcript.append({"role": "user", "content": reply})
+            if user_sim is not None and is_stop(reply):
+                break
             continue
         obs = world.step(action)
         transcript.append({"role": "agent", "content": f"{action.name}({action.kwargs})"})
