@@ -78,6 +78,26 @@ shape). Journey and judgments:
   the 15-of-36 selection rule (21 are state-mutation), added the rule-of-three n-caveat, and
   characterized the 2 collisions as coincidental (sibling _2 moved 786→3208). Data survived;
   only the adjectives were wrong.
+- **State-mutation follow-up reframed (procedure survives, not trajectory crashes).** Planned
+  A0 = replay a memorized concrete trajectory on a held-out mutation task. On inspection the
+  shipped `compiled_solution.py` is NOT hardcoded to shipped creds — it reads the supervisor
+  profile/passwords/contacts DYNAMICALLY and logs in as whatever the current world's user is.
+  So it is a state-general PROCEDURE, and running shipped 22cc237_1's procedure on the
+  held-out 22cc237_1 world PASSED 4/4 — it adapts. That is the boundary OUT side on a
+  state-mutation task (a memorized procedure survives regeneration) AND the specificity
+  control (the mutation task is solvable on fresh state, so a null gap is not "unsolvable").
+  A verbatim `api_calls.json` replay would instead fail via stale tokens/ids = brittleness
+  (the crash asterisk), so the clean measurement is procedure-survival across the 36 held-out
+  instances, paired with the QA concrete-answer IN side. Precondition 5, both sides, on fresh
+  independent state.
+- **Boundary on AppWorld held-out state (both sides, quantified).** Shipped procedure on the
+  held-out world survives 32/36 = 0.889 (QA 15/15, mutation 17/21; 3 crashed, 1 wrong — a few
+  compiled solutions carry residual instance-specificity, honest). Paired with the IN side
+  (memorized concrete answer 0/13): regeneration kills value-level memorization and leaves
+  state-general procedures intact — precondition 5 replicated on the independent domain, the
+  A0→A1 re-pricing made concrete. Not "regeneration passes only skill": procedure-knowledge
+  can itself be contamination (A2); separating skill from procedure-memorization needs the
+  held-out-family/CoinRun test, still future work.
 
 ## 2026-07-03 — shipped ablation, cross-class boundary, in-context contamination
 

@@ -79,6 +79,34 @@ Breadth (shipped `_1/_2/_3` orbit, cross-instance answer-swap,
 `scripts/appworld/appworld_a0_qa.py`): own 1.000, cross 0.000 — same shape, weaker because
 it is orbit analysis of public instances rather than a run on fresh state.
 
+## The other side of the boundary: a state-general procedure survives (all 36 held-out)
+
+The QA gap is the IN side (a concrete answer co-varies with state → memorizing it dies). The
+OUT side is the invariance mode: AppWorld's shipped `compiled_solution.py` is a *state-general
+procedure* — it reads the current world's supervisor/contacts/notes dynamically and acts, so
+it is not tied to any instance's concrete values. Running each **shipped** procedure against
+its **held-out** world (`scripts/appworld/procedure_survival.py`) measures whether
+procedure-level memorization survives regeneration, and doubles as the specificity control
+(are the held-out tasks solvable on fresh state at all?):
+
+| Shipped procedure on held-out world (n=36) | result |
+|---|---|
+| survives (reaches held-out oracle) | **32 / 36 = 0.889** |
+| — QA instances | 15 / 15 |
+| — state-mutation instances | 17 / 21 |
+| completed-but-wrong / crashed | 1 / 3 |
+
+So on the same held-out state where a memorized *answer* dies (0/13), a memorized *procedure*
+survives (0.889). That is precondition 5 with both sides measured on independent ground, and
+it parallels the SQL boundary (`BOUNDARY.md`: leaked query survives, leaked answer dies).
+Read as re-pricing: regeneration defeats value/trajectory-level contamination and leaves
+procedure-level contamination (A1) intact — it does not, by itself, distinguish a memorized
+procedure from genuine skill (that needs the held-out-family / CoinRun test, future work).
+The 4 non-survivors are compiled solutions with residual instance-specificity (3 crash, 1
+completes wrong) — not every shipped "procedure" is perfectly state-general; disclosed, not
+hidden. The specificity control also holds: the held-out mutation tasks are solvable on fresh
+state (17/21), so the QA null gap is "memorization stale," not "task broken."
+
 ## Honest scope
 
 - **A0 is the floor, not a realistic adversary.** A QA answer is a scalar, so "memorized
@@ -86,9 +114,11 @@ it is orbit analysis of public instances rather than a run on fresh state.
   regeneration defeats *value-level* memorization, where the scored target co-varies with
   the regenerated state. A model that memorized the *procedure* is not defeated by this —
   see the boundary corollary (`BOUNDARY.md`): a state-general method survives by design.
-- **Stronger adversary, not yet run:** the 21 state-mutation instances, with A0 = replay
-  instance i's concrete trajectory against instance j — the realistic vector (published
-  agent traces), needing a completed-but-wrong vs crashed-on-missing-id failure taxonomy.
+- **State-mutation is covered on the OUT side (procedure survival, above); the IN-side
+  verbatim-trajectory replay is not run.** Replaying instance i's concrete `api_calls.json`
+  against instance j would fail mostly via stale access-tokens/ids (crash), i.e. brittleness
+  rather than a clean "memorization stale" signal — so it is deferred; the procedure-survival
+  measurement is the informative half.
 - **Validation is a self-consistency check**, not a task-text-validity check (see above).
 - **"Independent" means independent-within-genus.** AppWorld and τ-bench are both DB-backed
   tool-agent benchmarks with deterministic state checks — a second benchmark within the
