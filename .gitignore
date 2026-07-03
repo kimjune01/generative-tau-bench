@@ -11,7 +11,7 @@ __pycache__/
 
 # OS
 .DS_Store
-</content>
 
-# logs
+# logs (but keep experiment receipts — they are evidence)
 *.log
+!docs/receipts/*.log

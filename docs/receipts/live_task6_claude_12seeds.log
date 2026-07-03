@@ -1,0 +1,18 @@
+  seed=0 success=True r_state=True r_outputs=True comparable=True branch=7453605304
+  seed=1 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=2 success=False r_state=False r_outputs=True comparable=True branch=7453605304
+  seed=3 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=4 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=5 success=True r_state=True r_outputs=True comparable=True branch=7453605304
+  seed=6 success=True r_state=True r_outputs=True comparable=True branch=7453605304
+  seed=7 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=8 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=9 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=10 success=True r_state=True r_outputs=True comparable=True branch=1569765161
+  seed=11 success=True r_state=True r_outputs=True comparable=True branch=9190635437
+
+agent=claude task=6 trials=12
+  pass@1  = 0.917
+  pass^2 = 0.833   pass@2 = 1.000
+  pass^4 = 0.667   pass@4 = 1.000
+  pass^8 = 0.333   pass@8 = 1.000

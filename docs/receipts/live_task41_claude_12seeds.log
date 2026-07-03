@@ -1,0 +1,21 @@
+  seed=0 success=True r_state=True r_outputs=True comparable=True branch=4068787148
+  seed=1 success=True r_state=True r_outputs=True comparable=True branch=9665100170
+  seed=2 success=True r_state=True r_outputs=True comparable=True branch=4772738468
+  seed=3 success=False r_state=False r_outputs=True comparable=True branch=9665100170
+  seed=4 success=True r_state=True r_outputs=True comparable=True branch=4772738468
+  seed=5 success=False r_state=False r_outputs=True comparable=True branch=9665100170
+Traceback (most recent call last):
+  File "/Users/junekim/Documents/generative-tau-bench/scripts/run_eval.py", line 98, in <module>
+    main()
+    ~~~~^^
+  File "/Users/junekim/Documents/generative-tau-bench/scripts/run_eval.py", line 76, in main
+    res = run_episode(agent, inst, tools, max_steps=args.max_steps, user_sim=sim)
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/eval.py", line 86, in run_episode
+    reply = user_sim.reply(content) if user_sim else "(ok)"
+            ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/usersim.py", line 56, in reply
+    out = self._run(self._build_prompt()).strip()
+          ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/usersim.py", line 76, in _run
+    raise RuntimeError(f"user-sim CLI failed ({proc.returncode}): {proc.stderr[:200]}")
+RuntimeError: user-sim CLI failed (1): 

@@ -1,0 +1,12 @@
+  seed=0 success=False r_state=False r_outputs=True comparable=True
+  seed=1 success=False r_state=False r_outputs=True comparable=True
+  seed=2 success=False r_state=False r_outputs=True comparable=True
+  seed=3 success=False r_state=False r_outputs=True comparable=True
+  seed=4 success=False r_state=False r_outputs=True comparable=True
+  seed=5 success=False r_state=False r_outputs=True comparable=True
+
+agent=claude task=0 trials=6
+  pass@1  = 0.000
+  pass^2 = 0.000   pass@2 = 0.000
+  pass^4 = 0.000   pass@4 = 0.000
+  pass^6 = 0.000   pass@6 = 0.000

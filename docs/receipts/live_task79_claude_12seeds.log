@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/Users/junekim/Documents/generative-tau-bench/scripts/run_eval.py", line 98, in <module>
+    main()
+    ~~~~^^
+  File "/Users/junekim/Documents/generative-tau-bench/scripts/run_eval.py", line 76, in main
+    res = run_episode(agent, inst, tools, max_steps=args.max_steps, user_sim=sim)
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/eval.py", line 68, in run_episode
+    instruction=user_sim.opening() if user_sim else instance.instruction,
+                ~~~~~~~~~~~~~~~~^^
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/usersim.py", line 52, in opening
+    return self.reply("Hi! How can I help you today?")
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/usersim.py", line 56, in reply
+    out = self._run(self._build_prompt()).strip()
+          ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/junekim/Documents/generative-tau-bench/gtau/usersim.py", line 76, in _run
+    raise RuntimeError(f"user-sim CLI failed ({proc.returncode}): {proc.stderr[:200]}")
+RuntimeError: user-sim CLI failed (1): 

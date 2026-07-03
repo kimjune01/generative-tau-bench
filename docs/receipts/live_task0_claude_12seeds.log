@@ -1,0 +1,18 @@
+  seed=0 success=True r_state=True r_outputs=True comparable=True branch=fallback
+  seed=1 success=True r_state=True r_outputs=True comparable=True branch=primary
+  seed=2 success=True r_state=True r_outputs=True comparable=True branch=fallback
+  seed=3 success=True r_state=True r_outputs=True comparable=True branch=primary
+  seed=4 success=False r_state=False r_outputs=True comparable=True branch=primary
+  seed=5 success=True r_state=True r_outputs=True comparable=True branch=fallback
+  seed=6 success=True r_state=True r_outputs=True comparable=True branch=primary
+  seed=7 success=True r_state=True r_outputs=True comparable=True branch=primary
+  seed=8 success=True r_state=True r_outputs=True comparable=True branch=primary
+  seed=9 success=True r_state=True r_outputs=True comparable=True branch=fallback
+  seed=10 success=True r_state=True r_outputs=True comparable=True branch=fallback
+  seed=11 success=True r_state=True r_outputs=True comparable=True branch=fallback
+
+agent=claude task=0 trials=12
+  pass@1  = 0.917
+  pass^2 = 0.833   pass@2 = 1.000
+  pass^4 = 0.667   pass@4 = 1.000
+  pass^8 = 0.333   pass@8 = 1.000
