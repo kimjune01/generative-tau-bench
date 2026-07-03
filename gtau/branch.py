@@ -635,6 +635,117 @@ RETAIL_110 = _cheapest_tablet_spec(110)
 RETAIL_111 = _cheapest_tablet_spec(111)
 
 
+# --- retail task 70: helmet M/high-vent, blue if multiple colors -----------------------
+
+_HELMET = "7765186836"
+
+RETAIL_70 = CatalogBranchSpec(
+    domain="retail",
+    base_task_index=70,
+    worlds=[
+        World("9013366374", {}),                                                         # == shipped (blue present)
+        World("8573379326", {(_HELMET, "9013366374"): False}),                           # blue gone -> red
+    ],
+    selector=FirstAvailable(_HELMET, ["9013366374", "8573379326"]),
+    shipped_branch="9013366374",
+    shipped_target="9013366374",
+    notes="M/high-vent helmet pool is {blue 9013366374, red 8573379326}; 'blue if multiple "
+          "colors else the available one' reduces to the cascade [blue, red] (cf. task 107)",
+)
+
+
+# --- retail tasks 102/103: metal watch, white if multiple colors -----------------------
+
+_WATCH = "6066914160"
+
+
+def _metal_watch_spec(index: int) -> CatalogBranchSpec:
+    return CatalogBranchSpec(
+        domain="retail",
+        base_task_index=index,
+        worlds=[
+            World("2407258246", {}),                                                     # == shipped (white present)
+            World("4510078629", {(_WATCH, "2407258246"): False}),                        # white gone -> black
+        ],
+        selector=FirstAvailable(_WATCH, ["2407258246", "4510078629"]),
+        shipped_branch="2407258246",
+        shipped_target="2407258246",
+        notes="available metal watches are {white 2407258246, black 4510078629} (metal blue "
+              "ships unavailable, left off); 'white if multiple' reduces to [white, black]",
+    )
+
+
+RETAIL_102 = _metal_watch_spec(102)
+RETAIL_103 = _metal_watch_spec(103)
+
+
+# --- retail task 45: canister vacuum, bagless if several options -----------------------
+
+_VACUUM = "1762337868"
+
+RETAIL_45 = CatalogBranchSpec(
+    domain="retail",
+    base_task_index=45,
+    worlds=[
+        World("7958300294", {}),                                                         # == shipped (several -> bagless)
+        World("1345513440", {(_VACUUM, "7958300294"): False, (_VACUUM, "2872451762"): False}),  # single bagged
+        World("2872451762", {(_VACUUM, "7958300294"): False, (_VACUUM, "1345513440"): False}),  # single bagged
+    ],
+    selector=FirstAvailable(_VACUUM, ["7958300294", "1345513440", "2872451762"]),
+    shipped_branch="7958300294",
+    shipped_target="7958300294",
+    notes="'bagless iff several canister options, else the single available one': the shipped "
+          "world exposes several (-> bagless 7958300294); the fallback worlds expose exactly "
+          "one canister so 'the single available one' is well-posed",
+)
+
+
+# --- retail task 60: blue earbuds <= owned price, no water resistance if several -------
+
+_EARBUDS = "9924732112"
+
+RETAIL_60 = CatalogBranchSpec(
+    domain="retail",
+    base_task_index=60,
+    worlds=[
+        World("6077640618", {}),                                                         # == shipped (several -> not-resistant)
+        World("8555936349", {(_EARBUDS, "6077640618"): False, (_EARBUDS, "1646531091"): False}),
+        World("1646531091", {(_EARBUDS, "6077640618"): False, (_EARBUDS, "8555936349"): False}),
+    ],
+    selector=FirstAvailable(_EARBUDS, ["6077640618", "8555936349", "1646531091"]),
+    shipped_branch="6077640618",
+    shipped_target="6077640618",
+    notes="qualifying blue earbuds <= owned price are {6077640618 not-resistant, 8555936349, "
+          "1646531091} (all IPX4); 'no water resistance if several' -> not-resistant when "
+          "several, else the single available one",
+)
+
+
+# --- retail tasks 99/100: +1000-piece same-difficulty jigsaw, animal/art preference ----
+
+_JIGSAW = "1808611083"
+
+
+def _jigsaw_theme_spec(index: int, preference: List[str], shipped_target: str) -> CatalogBranchSpec:
+    return CatalogBranchSpec(
+        domain="retail",
+        base_task_index=index,
+        worlds=[
+            World(preference[0], {}),                                                    # == shipped (both present -> preferred)
+            World(preference[1], {(_JIGSAW, preference[0]): False}),
+        ],
+        selector=FirstAvailable(_JIGSAW, preference),
+        shipped_branch=preference[0],
+        shipped_target=shipped_target,
+        notes="1500-piece intermediate jigsaws are {animals 6245746168, art 5546244844}; "
+              "task 99 prefers animal, 100 prefers art — the two ship as each other's branches",
+    )
+
+
+RETAIL_99 = _jigsaw_theme_spec(99, ["6245746168", "5546244844"], "6245746168")
+RETAIL_100 = _jigsaw_theme_spec(100, ["5546244844", "6245746168"], "5546244844")
+
+
 BranchSpec = Union[ExchangeBranchSpec, CatalogBranchSpec]
 
 BRANCH_SPECS: Dict[str, BranchSpec] = {
@@ -655,6 +766,13 @@ BRANCH_SPECS: Dict[str, BranchSpec] = {
     "retail:74": RETAIL_74,
     "retail:110": RETAIL_110,
     "retail:111": RETAIL_111,
+    "retail:70": RETAIL_70,
+    "retail:102": RETAIL_102,
+    "retail:103": RETAIL_103,
+    "retail:45": RETAIL_45,
+    "retail:60": RETAIL_60,
+    "retail:99": RETAIL_99,
+    "retail:100": RETAIL_100,
 }
 
 

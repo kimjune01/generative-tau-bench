@@ -24,6 +24,17 @@ Reality check from authoring: the easy variant-availability well is nearly dry.
   new selector → ~9 specs, getting ~17→~26. Reaching 40 then still needs order-field/price
   pivots (new machinery) and/or airline. So "widen to 40" is a real multi-step grind, not an
   afternoon; flagged for the user.
+- **Target reset to n=30** (user: "good enough by most standards"). And the cardinality tasks
+  turned out NOT to need a new selector — "X if multiple, else the available one" REDUCES to a
+  `FirstAvailable` cascade (exactly as task 107 already does), so they use existing machinery.
+  Added 7 more (→ 24): retail 70 (helmet color), 102/103 (metal-watch color), 45 (vacuum
+  bagless-if-several), 60 (blue earbuds), 99/100 (jigsaw animal/art). For 45 and 60 the
+  fallback worlds expose exactly ONE option so "the single available one" stays well-posed.
+  71/72 dropped (degenerate: only one medium-polyester backpack variant exists). All validated
+  over 240 seeds. Remaining 6 to hit 30 = action-flip tasks (modify-vs-cancel / exchange-vs-
+  return: retail 76, 88, 91, 30, 57, 89), which pivot on variant availability (already
+  supported) but need `patch` functions to reshape the golden per branch — the CatalogBranchSpec
+  `patch` hook (used by task 1) covers this; no new resampler axis needed for 30.
 
 ## 2026-07-03 (cont.) — step-4 impact demo: Fable design review before spending compute
 
