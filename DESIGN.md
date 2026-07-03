@@ -3,9 +3,14 @@
 **Thesis.** If a benchmark's tasks are the kind where regenerating the state changes the
 correct answer *through the skill being measured* (skill-bearing state equivariance), and
 the generator stays representative of the target task (construct validity), then seeded
-procedural generation extends the benchmark's useful life indefinitely — turning a
-depreciating asset (a fixed test set that saturates and leaks on a ~1–2 year clock) into a
-renewable one.
+procedural generation *re-prices* the benchmark's decay rather than halting it. It converts
+the failure clock from time-until-instances-leak (the ~1–2 year saturation of a fixed test
+set) into time-until-the-orbit's-skill-quotient-is-learned, a slower clock whose rate is set
+by how much *structural* variation you author, not by the calendar. The asset becomes
+renewable at the margin but bounded: per-instance freshness entropy cannot exceed the class's
+authored structural entropy. Seeds recycle that entropy, they do not manufacture it. (This is
+the honest form after an adversarial fable pass; "indefinite" freshness was the overclaim a
+single fine-tune-on-the-generator experiment would end.)
 
 A *method*, not a benchmark: a reusable transformation that regenerates an interactive
 environment's state from a seed and re-derives the grader by replaying a canonical reference
@@ -19,7 +24,8 @@ case study and existence proof, not the product. Design note and paper plan.
 > regeneration of the environment state with a **replay-derived oracle** (re-execute a
 > canonical reference against that state), so fresh instances *and their graders*
 > re-derive from a seed with no re-annotation and no mining. The empirical core is
-> mapping the boundary of *when* regeneration defeats contamination.
+> mapping the boundary of *when* regeneration re-prices contamination, and against which
+> declared adversary class the re-pricing holds.
 
 Reframed after an adversarial fan-out (log: `_drafts/executable-oracle-class.md`; codex
 convergence folded in). Three things changed the claim:
@@ -29,7 +35,7 @@ convergence folded in). Three things changed the claim:
   coding demonstrations.
 - **Two regeneration axes.** *State*-regeneration (ours) keeps the oracle a pure computation
   and holds difficulty fixed (re-keying is a nuisance-parameter swap). *Problem*-regeneration
-  (DyVal, GSM-Symbolic: synthesize a fresh problem) also defeats contamination but reintroduces
+  (DyVal, GSM-Symbolic: synthesize a fresh problem) also raises the contamination bar but reintroduces
   variable difficulty and well-posedness risk through an LLM in the instance path. We claim the
   state-regeneration axis for interactive environments; we cite problem-regeneration as the
   neighboring alternative (e.g. text-to-SQL is only evergreen-able on *that* axis).
@@ -98,6 +104,66 @@ The clean test is MMLU vs GSM-Symbolic: both are single-answer QA, but GSM-Symbo
 *re-runnable solution procedure* while MMLU carries only a *key*. Presence of a re-runnable
 reference is the boundary between computation and lookup; precondition 5 is the boundary
 between computation-that-co-varies and computation-that-doesn't.
+
+## What "evergreen" buys: two axes, an adversary ladder, and a bounded budget
+
+The applicability preconditions above say *where* the recipe fits. They do not say *what it
+buys against a determined adversary*, and stating that honestly is the difference between a
+proposition and a vibe. Structure forced open by an adversarial fable pass:
+
+**It is two axes, not a list of preconditions.** Everything collapses into two independent
+quantities:
+
+- **Oracle axis (trust, not cost).** Does a golden-producing procedure exist whose correctness
+  is *independent of the capability under test* — no learned component anywhere in the oracle
+  path? This is the right statement, not "construction is cheaper than solving." Our own
+  flagship refutes the cost framing: branch-selection derives the golden by running the same
+  predicate the winning policy runs, so construction is *not* cheaper than solving; it is
+  *trusted* where an LLM golden would not be. Factoring is the special case where the trusted
+  computation happens to be forward planting (construction genuinely cheaper). Full structural
+  regen fails this axis: its only golden-producer is an LLM as fallible as the testee.
+- **Entropy axis (one quantity, not two conditions).** The min-entropy of the golden given the
+  adversary's *total* view: public generator code, orbit history, and the instance. "Non-leaking"
+  (entropy given the instance) and "equivariance" (entropy given memorized orbit representatives)
+  are two conditioning slices of this one quantity, so they are not independent conditions. It is
+  also a *continuum, not a boolean*: cosmetic re-key transports 0 fresh bits, GSM-Symbolic
+  transports operand-bits-only, branch-selection transports 1 bit (which branch), full structural
+  would transport many. A boolean iff over a continuum is false at every interior point; the
+  contribution is the *measure*, not a partition.
+
+Two seams the preconditions do not cover, both real: **grader completeness** (plantedness
+certifies *one* witness; a sound oracle must accept the whole equivalence class of valid
+behaviors — see "Equivalence, not exact hash," promoted here to a first-class requirement that must hold across the
+orbit, not per hand-checked instance); and **orbit min-entropy vs. the adversary's training
+budget** (if the seed range is guessable or the orbit is small enough to enumerate and train
+on, all axes pass and the benchmark is still contaminated — the seed protocol (reveal at eval time) is doing
+load-bearing work *outside* any generator-intrinsic condition).
+
+**Index every claim by a declared adversary class.** There is no hardness assumption available
+("evaluate one predicate" is hard for no interesting circuit class), so evergreen-ness is only
+ever *relative to a declared adversary*:
+
+- **A0 — verbatim replayer.** Emits the memorized shipped golden. Defeated by any equivariant
+  regeneration (this is what the 0.52 branch-selection gap measures).
+- **A1 — memorize-plus-cheap-transport.** Memorizes re-key maps, closed-form plug-ins, and
+  *the finite authored branch pool plus a dispatch selector*. This adversary closes the
+  branch-selection gap, because the branch template pool is finite, authored, and public.
+- **A2 — fine-tune on the public generator's outputs.** The strongest, and the one our
+  memorization meter most needs; the CLI-agent choice (see Risks) forecloses running it, which is a
+  real hole, not a footnote.
+
+**The honest headline, and its bound.** Regeneration does not *defeat* memorization; it
+*re-prices* it, from per-instance (leaks on a training-cutoff clock) to per-class (learned on a
+train-on-the-quotient clock), at a per-class cost bounded by the authoring budget already paid.
+The mode-A critique we level at GSM-Symbolic applies to branch-selection one rung up: against
+A1 the measured construct shrinks from "follow a natural-language policy over dialogue" to
+"dispatch among authored templates." So the flagship's honest claim is narrow and bold: *it
+opens a measurable gap against A0 where cosmetic re-keying opens none* — not "defeats
+memorization." The iff is demoted to a **prediction**: the boundary experiment (the proof ladder) should
+show the gap firing on equivariant classes and staying null on invariant ones, and the
+distinctive, falsifiable version is CoinRun-style — fine-tune on N public seeds, and the gap
+persists for held-out *families* (thesis) rather than decaying to zero (null: regeneration
+merely re-prices with no skill transfer).
 
 ## Motivation: contamination is a recognized, cross-benchmark problem
 
@@ -200,17 +266,47 @@ apply the *same* map to the golden program's arguments and to the user-simulator
 instruction. The oracle recomputes itself for free. Required output strings stop
 being hand-annotated and become *derived* from the replayed final state.
 
-Two levels, with a real cost boundary between them:
+Three rungs, and what separates them is not cost but whether the oracle stays
+*derivable by construction*:
 
 - **Cosmetic re-keying** (bijection over ids, resampled labels) is free and defeats
-  *verbatim* memorization. Ship it first.
-- **Structural regeneration** (resample the contents, not just relabel) defeats
-  *pattern* memorization but can silently break tasks: randomize the catalog and a
-  conditional preference may resolve down a different branch, or a required product
-  variant may cease to exist; randomize order status and a "cancel pending order"
-  task lands on a delivered order. So the generator must be *constraint-aware*: pin
-  the predicates the task depends on, randomize everything else. That constraint
-  set is the work, and it is what a class *is*.
+  *verbatim* memorization. The oracle is a proven alpha-renaming invariant. Ship it
+  first, but see Risks: against tau-bench's actual threat model it is near-inert,
+  because it preserves the resolution path byte-for-byte.
+- **Parametric branch-selection** (resample the contents that decide *which* golden
+  fires; hold the golden's shape fixed) defeats *path* memorization. Resample the
+  catalog so a conditional preference resolves down the other branch and the correct
+  action program changes, so a memorized resolution path stops transferring. The
+  oracle stays construction-derived because the branches are *already hand-authored*:
+  in retail's `tasks_test.py` the two branches of one instruction ship as two
+  separate Sierra-verified tasks. The generator's only job is to pin, by seed, which
+  predicate outcome the resampled DB satisfies. It *selects* among authored goldens,
+  it does not synthesize one. This is the reachable rung above cosmetic. **Built and
+  validated** on retail base task 0 (`gtau/branch.py`, `tests/test_branch_selection.py`):
+  toggling the availability of the one (clicky, RGB, full size) keyboard variant by
+  seed flips the branch ~50/50; every derived golden replays with zero tool errors
+  (solvable by construction, since the target is always an available variant); the two
+  branches reach distinct end-states; and the fallback branch reproduces the shipped
+  tau-bench task-0 oracle byte-for-byte (a faithful extension, not a divergence). The
+  payoff is a memorization meter *against adversary A0* (the verbatim replayer): a policy
+  that replays the memorized shipped golden scores **0.48** (exactly the fallback fraction)
+  while a policy that evaluates the instruction's predicate per seed scores **1.00**, a gap
+  of **0.52**, where cosmetic re-keying leaves the same gap at ~0 because it preserves the
+  very path the replayer emits. State it narrow and bold: this opens a gap against A0 where
+  re-keying opens none. It does *not* survive A1 (memorize the k authored branches plus the
+  one-bit dispatch predicate closes it), because the branch pool is finite, authored, and
+  public. Widening the class past A0 is authoring more branches, which is the bounded budget
+  the thesis names, not free freshness (see "What evergreen buys").
+- **Full structural regeneration** (a genuinely new golden path, a policy branch no
+  human enumerated) would defeat *pattern* memorization outright, but is not
+  tractable here. It needs a `solve(db, intent) -> action_program` that reads the
+  policy and emits a correct program; no such solver exists in tau-bench or gtau, and
+  the policy is 81 lines of `wiki.md` prose with content-dependent branches, not a
+  machine-checkable spec. The only artifact that can pick a branch under genuinely
+  new state is an LLM reading that prose, i.e. the system under test, which makes the
+  oracle as fallible as the agent and collapses precondition 3. This rung is
+  foreclosed unless a class's policy is first re-authored as an executable constraint
+  program, which is the per-class authoring cost made total, and what a class *is*.
 
 ### 2. Width in the number of classes, homogeneity within a class
 
@@ -322,9 +418,12 @@ symbolically; mining (LiveBench/SWE-rebench) sidesteps generation entirely. **St
 tool-agent tasks are the corner of LLM evaluation where the top rung is reachable,
 because replaying the golden emits the (instance, grade) pair together.** That is the
 port, and why it is new: not a new trick, the strongest-oracle trick applied where it
-was newly available. Every "that is just DyVal / ProcGen / τ²" objection is answered by
-one sentence: none of them had a constructive, replay-derived oracle over a mutating
-tool world.
+was newly available. The "that is just DyVal / ProcGen / τ²" objection is answered by the
+*assembly*, not the oracle alone: τ² does have a constructive replay-derived oracle
+(retail/airline) and does have a compositional generator (telecom), but never in the same
+domain and never wired to seeded regeneration as a freshness protocol (see "The delta versus
+τ²-bench"). DyVal/ProcGen never had the replay oracle over a mutating tool world. What is new
+is the fusion, in one domain, of the top-rung oracle with seeded, reveal-at-eval regeneration.
 
 Honest hedge (Recht): a score drop on a fresh set is necessary but not sufficient
 evidence of memorization. Recht found the ImageNet-v2 drop was harder-reconstruction,
@@ -367,16 +466,33 @@ Keep "to our knowledge" until the sweep is re-run at submission.
 
 ### The delta versus τ²-bench, which is where novelty lives or dies
 
-τ²-bench (`2506.07982`) already has a compositional generator built from atomic
-init/solution/assert functions. Our differentiation is narrow and must be stated
-precisely: (1) derive the oracle by *replaying the solution program* on the
-generated DB rather than maintaining separate hand-written assertion functions, so
-oracle maintenance drops toward zero; (2) make *seeded regeneration with
-reveal-at-eval-time* the primary contamination protocol, not just a task-authoring
-convenience; (3) make *paired CRN reporting* standard. Open task, blocking the
-novelty claim: read τ²-bench's actual oracle and generation code and confirm it does
-not already do (1). If it does, the delta collapses to (2) and (3), which are
-protocol contributions, not mechanism.
+τ²-bench (`2506.07982`) has both halves of an evergreen benchmark, but they never
+meet, and neither is a freshness protocol. Verified against the actual source
+(`src/tau2/evaluator/`, `src/tau2/domains/telecom/tasks/`), not the paper:
+
+- Replay-derived grading is real but *not* our invention. Retail and airline grade by
+  building a gold env, replaying `evaluation_criteria.actions`, and comparing
+  `get_db_hash()` (`evaluator_env.py:81-125`). That is τ-bench's existing mechanism.
+  Claim (1) below, "we derive the oracle by replay," must therefore be *cited, not
+  claimed as novel* — gtau's own `replay.py` docstring already concedes this.
+- The compositional generator is real but *deterministic enumeration dumped to static
+  public JSON*, run once at authoring time, over hardcoded entity literals
+  (`"John Smith"`, `customer_id="C1001"`). No `random.Random(seed)` touches DB content
+  anywhere. Every `seed` in the repo drives the user-sim LLM or subsamples the fixed
+  pool. So τ² is not evergreen in any operational sense: the emitted set is frozen and
+  shipped, and re-running the generator yields new *combinations*, not new *content*.
+- The two halves live in *different domains and never co-occur*. The domain with the
+  generator (telecom) grades 100% by hand-written `env_assertions`, 0% by replay; the
+  domains with replay-derived grading (retail, airline) have no generator at all. τ²
+  never fuses "generated instance" with "oracle re-derived by replay."
+
+So the defensible delta is exactly the assembly τ² leaves unbuilt: (1) *use* the
+replay-derived oracle to make seeded regeneration free (no fresh assertions), in the
+same domain; (2) make *seeded regeneration with reveal-at-eval-time* the primary
+contamination protocol, not a one-time authoring convenience; (3) make *paired CRN
+reporting* standard. This is validated only on DB-hash-graded (retail/airline-style)
+domains; extending it to an assertion-graded compositional domain like τ²'s telecom
+is unbuilt and non-trivial. Scope the claim there and say so.
 
 Most likely to scoop this: the τ-bench / τ² authors, who own the franchise and have
 the generator direction already.
@@ -449,7 +565,9 @@ schema-agnostic generator (have it, τ-bench retail+airline), the soundness audi
 one **independent** second instantiation (WorkArena, step 6 — *not* just a second τ-bench
 domain), and the cross-class boundary experiment (step 5), which is the thing that makes it
 a method and not "known machinery applied to τ-bench." The explicit τ²-bench oracle-code
-comparison remains the blocking novelty check.
+comparison is now done (see "The delta versus τ²-bench"): the delta survives but narrows
+to the freshness-protocol assembly, and "generation is grading" must be cited to τ-bench,
+not claimed.
 
 ## Risks and honest limits
 
@@ -459,11 +577,18 @@ comparison remains the blocking novelty check.
   from weights. What it memorizes is the *resolution path*: the policy branch, the
   conditional fallback, the intended end-state. Re-keying preserves all of that
   byte-for-byte (same products, prices, structure, policy branch), so it defeats a
-  threat model that barely exists. The real signal lives entirely in **structural
-  regeneration** (resampling contents under class constraints), which is unbuilt.
+  threat model that barely exists. The real signal lives one rung up, in **parametric
+  branch-selection** (resample the contents that decide which authored golden fires),
+  now built on one retail task and shown to open a 0.52 gap *against A0* where cosmetic
+  re-keying opens ~0 (see the regeneration ladder above) — but that gap is closed by A1
+  (memorize the authored branch pool plus the dispatch predicate), so branch-selection
+  buys a slower depreciation, not immunity; the rung above that, **full structural
+  regeneration**, the only one that would break the authoring-budget bound, is foreclosed
+  on tau-bench because its only implementation path is an LLM-as-golden, which
+  disqualifies the oracle.
   Corollary: a null memorization-gap could be *structural* (re-key blind to semantic
   contamination), not evidential. Treat cosmetic re-key as the substrate for
-  structural regeneration, not as a contamination defense on its own.
+  branch-selection, not as a contamination defense on its own.
 - **The user simulator is central, not orthogonal, and the MVP has a construct-
   validity break.** A tau-bench `instruction` is the *user simulator's* script,
   carrying private conditional intent the agent must ELICIT over dialogue. Handing it
@@ -472,12 +597,17 @@ comparison remains the blocking novelty check.
   marks them `comparable=False`). A faithful number needs a `UserSim` (LLM, or a
   deterministic scripted user that reveals intent only when asked); the hook exists,
   no implementation ships.
-- **CLI agents measure product, not model.** `claude -p` / `codex exec` wrap a model
-  in a coding-agent scaffold with its own prompt and loop, and cannot be fine-tuned
-  (which forecloses the memorization-meter experiment). Use them only for a labeled
-  demo. Any published model-competence number should use an API tool-calling agent
-  (tau-bench ships one). Whether the goal is *model* competence or *CLI-product*
-  competence is an open decision that drives this.
+- **CLI agents foreclose the A2 experiment the theory most needs.** `claude -p` /
+  `codex exec` wrap a model in a coding-agent scaffold with its own prompt and loop, and
+  cannot be fine-tuned. That is not a minor infra limit: the A2 adversary (fine-tune on the
+  public generator, then measure the held-out-*family* gap) is the *only* experiment that
+  discharges the central thesis — that the gap persists for held-out families rather than
+  decaying to zero as the generator's distribution is learned. Foreclosing it means the
+  built 0.52 gap can only speak to A0, the weakest adversary. Any published
+  model-competence *or contamination-resistance* number needs an API tool-calling agent
+  that can be fine-tuned (tau-bench ships the tool-calling agent; the fine-tune arm is
+  unbuilt). Whether the goal is *model* competence or *CLI-product* competence is an open
+  decision that drives this.
 - **Authoring cost is the real labor.** Regeneration saves per-instance annotation,
   not per-class design. Width equals authored classes. LLM-authoring classes to
   scale reintroduces the solvability audit on machine-made templates.
