@@ -144,7 +144,7 @@ load-bearing work *outside* any generator-intrinsic condition).
 ever *relative to a declared adversary*:
 
 - **A0 — verbatim replayer.** Emits the memorized shipped golden. Defeated by any equivariant
-  regeneration (this is what the 0.52 branch-selection gap measures).
+  regeneration (this is what the 0.44–0.72 branch-selection gaps measure).
 - **A1 — memorize-plus-cheap-transport.** Memorizes re-key maps, closed-form plug-ins, and
   *the finite authored branch pool plus a dispatch selector*. This adversary closes the
   branch-selection gap, because the branch template pool is finite, authored, and public.
@@ -241,8 +241,10 @@ Three things age badly, and all three are consequences of the instances being
    from secondary reporting; the primary page is unverified here). Static open
    benchmarks decay.
 2. **Too small for error bars.** 115 retail + 50 airline test tasks, with
-   `pass^k` reported as a point and no CIs. `pass^8` at the frontier rides on a
-   near-binary per-task estimator over ~50 tasks.
+   `pass^k` reported as a point and no CIs. At k = trials = 8 the per-task
+   `pass^8` estimator is exactly binary (all 8 pass or not), so the reported
+   number is a plain proportion over ~50 Bernoulli tasks
+   (receipt: `docs/receipts/POWER_AND_COST.md`).
 3. **Narrow and hand-authored.** Difficulty and coverage are not controlled; the
    suite contains near-duplicate tasks. τ²-bench's compositional generator is the
    authors' own acknowledgment of this gap.
@@ -282,16 +284,23 @@ Three rungs, and what separates them is not cost but whether the oracle stays
   separate Sierra-verified tasks. The generator's only job is to pin, by seed, which
   predicate outcome the resampled DB satisfies. It *selects* among authored goldens,
   it does not synthesize one. This is the reachable rung above cosmetic. **Built and
-  validated** on retail base task 0 (`gtau/branch.py`, `tests/test_branch_selection.py`):
-  toggling the availability of the one (clicky, RGB, full size) keyboard variant by
-  seed flips the branch ~50/50; every derived golden replays with zero tool errors
-  (solvable by construction, since the target is always an available variant); the two
-  branches reach distinct end-states; and the fallback branch reproduces the shipped
-  tau-bench task-0 oracle byte-for-byte (a faithful extension, not a divergence). The
-  payoff is a memorization meter *against adversary A0* (the verbatim replayer): a policy
-  that replays the memorized shipped golden scores **0.48** (exactly the fallback fraction)
-  while a policy that evaluates the instruction's predicate per seed scores **1.00**, a gap
-  of **0.52**, where cosmetic re-keying leaves the same gap at ~0 because it preserves the
+  validated on a 13-task family** (`gtau/branch.py`, `tests/test_branch_selection.py`;
+  inventory: `docs/BRANCHABLE_TASKS.md` — 76 of 165 tasks are state-testable, 14 graded
+  EASY, 12 of 12 attempted specs validated, task 83 deferred as a different resampler
+  shape). The engine is a three-part algebra: a seeded resampler over each spec's
+  realizable availability-worlds, a selector that re-evaluates the instruction's stated
+  predicate (preference cascade or argmin/argmax) on the resampled catalog, and a golden
+  builder that substitutes the branch-decided slot into the shipped action list —
+  identity substitution on the shipped branch, so every spec reproduces its shipped
+  oracle byte-for-byte (and the sibling task pairs 0/1, 6/7, 8/9, 41/42, 97/98 anchor
+  both sides). Every derived golden replays with zero tool errors (solvable by
+  construction); branches reach distinct end-states; branch-coupled `outputs` co-derive
+  with the pivot (task 44's refund amount). The payoff is a memorization meter *against
+  adversary A0* (the verbatim replayer): across the 13 specs the shipped-golden replayer
+  scores exactly the shipped-branch seed fraction (asserted, not approximated) while the
+  predicate-following policy scores **1.00** on all, for gaps of **0.44–0.72**
+  (binary specs ~0.5, k-way argmin specs up to 0.72 — more realizable branches, bigger
+  gap), where cosmetic re-keying leaves the same gap at ~0 because it preserves the
   very path the replayer emits. State it narrow and bold: this opens a gap against A0 where
   re-keying opens none. It does *not* survive A1 (memorize the k authored branches plus the
   one-bit dispatch predicate closes it), because the branch pool is finite, authored, and
@@ -520,20 +529,33 @@ wrong axis. Disambiguate the n's:
 
 ### The proof ladder (cheapest and most decisive first)
 
-1. **Power argument (compute-free).** Show analytically that the static benchmark
-   cannot resolve realistic effect sizes: at n=115 retail the binomial SE makes a
-   5–8 point harness gap non-significant; state the n actually required. Proves
-   *necessity* of more instances before any model runs.
-2. **Cost accounting (compute-free).** Quantify the unique benefit: the generator
-   emits M graded instances for *zero annotations* because the oracle re-derives by
-   replay; mining needs a pipeline, templated QA needs per-variant answer keys,
-   hand-authoring needs graders. Fixed-cost-high, marginal-cost-zero. Proves
-   *uniqueness*, and is the direct answer to "why the extra complexity."
-3. **Soundness (large-but-free).** Over thousands of generated instances: injective
-   re-key, coverage (no original id leaks), clean solvability (golden replays with
-   no tool errors), determinism (same seed → same oracle), and an audited
-   invalid-instance rate driven to ~0. This is property/correctness evidence, not
-   sampled estimates. (Core already passing in `tests/`.)
+1. **Power argument (compute-free). DONE** (`docs/receipts/POWER_AND_COST.md`): the
+   static benchmark cannot resolve realistic effect sizes — the minimum detectable
+   effect for an unpaired harness comparison is **15–18 points at n=115** (retail)
+   and **22–28 points at n=50** (airline), α=.05, power=.80; a 5-point gap needs
+   ~1,565 instances/arm unpaired, ~1,256 shared paired. Pairing on the *static* set
+   does not rescue it (power 0.107 at n=115): the generator's contribution is
+   unbounded n *while retaining* pairing via shared seeds. Bonus: τ-bench's
+   `pass^8` per-task estimator is exactly binary (k = trials = 8), and p→p⁸
+   attenuates a 5-point per-trial gap to ~0.45 points. Proves *necessity* of more
+   instances before any model runs.
+2. **Cost accounting (compute-free). DONE** (same receipt): the generator emits M
+   graded instances for *zero annotations* because the oracle re-derives by replay;
+   mining needs per-instance collection + filtering, hand-authoring needs a
+   verified golden per task. Honest scoping from the receipt: templated QA
+   (GSM-Symbolic) *also* reaches ~zero marginal annotation by deriving each
+   variant's answer — per-*template*, not per-variant, cost — so the delta we own
+   is zero marginal cost *for stateful interactive tasks*, where templating does
+   not reach. Fixed-cost-high, marginal-cost-zero. Proves *uniqueness*, and is the
+   direct answer to "why the extra complexity."
+3. **Soundness (large-but-free). DONE** (`docs/receipts/SOUNDNESS_AUDIT.md`,
+   `scripts/audit_soundness.py`): injective re-key, coverage (no original id leaks,
+   checked at substring level), clean solvability, determinism, faithfulness, over
+   4,125 re-keyed + branch-selected instances at scale — invalid rate driven to
+   **0** after the audit caught a real id-leak bug the 5-seed test suite had
+   certified clean (`_mint`'s suffix fallback embedded the original id in every
+   digit-less airline reservation code; fixed by same-length letter-run
+   regeneration). The audit paying for itself is the receipt's own argument.
 4. **Impact demo (small compute, the money shot).** Show the mechanism *changes a
    conclusion*: a harness A-vs-B comparison that is tied or misleading on static
    τ-bench resolves or flips under powered, same-seed-paired generative evaluation.
@@ -579,7 +601,7 @@ not claimed.
   byte-for-byte (same products, prices, structure, policy branch), so it defeats a
   threat model that barely exists. The real signal lives one rung up, in **parametric
   branch-selection** (resample the contents that decide which authored golden fires),
-  now built on one retail task and shown to open a 0.52 gap *against A0* where cosmetic
+  now built on a 13-task family and shown to open 0.44–0.72 gaps *against A0* where cosmetic
   re-keying opens ~0 (see the regeneration ladder above) — but that gap is closed by A1
   (memorize the authored branch pool plus the dispatch predicate), so branch-selection
   buys a slower depreciation, not immunity; the rung above that, **full structural
@@ -594,16 +616,19 @@ not claimed.
   carrying private conditional intent the agent must ELICIT over dialogue. Handing it
   straight to the agent (the current `user_sim=None` path) leaks the answer sheet, so
   those runs measure an easier task and are NOT tau-bench-comparable (`eval.py` now
-  marks them `comparable=False`). A faithful number needs a `UserSim` (LLM, or a
-  deterministic scripted user that reveals intent only when asked); the hook exists,
-  no implementation ships.
+  marks them `comparable=False`). A faithful number needs a `UserSim` that reveals
+  intent only when asked; `gtau/usersim.py` now ships one (a CLI-driven simulator
+  carrying tau-bench's own simulator prompt verbatim), and the first mediated
+  episodes pass on both branches of the task-0 spec with `comparable=True`. The
+  remaining honest caveat: the simulator is itself an LLM, so simulator fidelity is
+  a shared limitation with tau-bench, not a new one.
 - **CLI agents foreclose the A2 experiment the theory most needs.** `claude -p` /
   `codex exec` wrap a model in a coding-agent scaffold with its own prompt and loop, and
   cannot be fine-tuned. That is not a minor infra limit: the A2 adversary (fine-tune on the
   public generator, then measure the held-out-*family* gap) is the *only* experiment that
   discharges the central thesis — that the gap persists for held-out families rather than
   decaying to zero as the generator's distribution is learned. Foreclosing it means the
-  built 0.52 gap can only speak to A0, the weakest adversary. Any published
+  built 0.44–0.72 gaps can only speak to A0, the weakest adversary. Any published
   model-competence *or contamination-resistance* number needs an API tool-calling agent
   that can be fine-tuned (tau-bench ships the tool-calling agent; the fine-tune arm is
   unbuilt). Whether the goal is *model* competence or *CLI-product* competence is an open
@@ -631,6 +656,71 @@ not claimed.
   benchmark's "we sampled 500 issues" claim also is, just made explicit.
 - **The novelty negative is a search result, not a proof.** Re-run the sweep before
   submission.
+
+## Discussion material (live receipts, 2026-07-02)
+
+Staging for the paper's discussion section. Every claim here traces to a receipt in
+`docs/receipts/`; numbers are small-n and say so.
+
+- **Weights-contamination without behavior-contamination is a real state, and only a
+  behavioral instrument can see it.** The recall probe (`RECALL_PROBE.md`) shows a
+  frontier model reproducing task 0's golden digit-perfect from weights: order id,
+  all four item ids, payment method, fallback target included. The same model, live
+  on flipped worlds with the catalog one tool call away, followed the catalog
+  (5/6 flipped, 6/6 shipped; `live_task0_claude_12seeds.log`). A static score cannot
+  distinguish clean weights from contaminated-but-inert weights; the pair of probes
+  separates presence (recall) from deployment (branch split). The static benchmark's
+  shadow is the converse statement: every post-2024 static τ-bench number carries an
+  unmeasurable memorization component, and this instrument is how it becomes
+  measurable.
+
+- **Self-report is not a contamination defense, in either direction.** The recalling
+  model flagged ten-digit ids as exactly where it would confabulate, then produced
+  all six exactly. Its confidence report was anti-correlated with its memory. The
+  declining model (gpt-5.5, same probe) is the other direction: "I don't know" is
+  threefold ambiguous between absent memory, failed retrieval, and trained
+  reluctance to recite benchmark internals. Recall probes are asymmetric evidence.
+  They establish presence when they fire and nothing when silent.
+
+- **Regurgitation auditing will go dark; behavioral metering survives.** GSM1k
+  correlates score inflation with a model's propensity to regenerate benchmark text.
+  That propensity is trainable away, and refusal is cheap to teach, so
+  confession-based auditing stops working the moment labs patch it (the declining
+  model above may be that future arriving early). The branch split cannot be
+  suppressed by policy. Removing it requires the model to read the resampled world
+  instead of its weights, which is decontamination of the behavior itself. A meter
+  the subject can only game by becoming honest is the right kind of meter.
+
+- **The static benchmark nests inside the generative one, which retires the Recht
+  confound by construction.** Shipped-world seeds reproduce the original instance
+  byte for byte (the faithfulness anchors), so original-versus-regenerated is a
+  within-instrument, difficulty-controlled comparison: the shipped stratum gives the
+  regular reading, the flipped strata give the reading only the seeded instrument
+  can take. A drop confined to flipped strata cannot be reconstruction-hardness,
+  because the control stratum IS the original world, re-run with fresh dialogue.
+
+- **Lab-side hold-out is real, partial, unauditable — and the meter reads through
+  it.** The cross-model recall asymmetry is plausibly supply-side decontamination
+  observed in the wild: labs that eval on a benchmark filter it from training, and
+  gpt-5.5's fade (paper-level facts intact, instance-level dark, "no continuation
+  in memory" under completion framing) is what a working filter looks like. Claude's
+  digit-perfect recall is what a failing one looks like — filtering the canonical
+  repo misses the diaspora of forks, harnesses, and quoted logs that replicate the
+  exact strings (GSM1k's replication finding, one level up). Jointly they show
+  hold-out is heterogeneous across labs, and filter lists are secret, so static
+  cross-lab numbers rest on unverifiable, unequal supplier promises. The behavioral
+  meter converts the promise into a measurement (twelve blind episodes read one
+  lab's filter as effective — 0/12 including shipped-branch worlds where memorized
+  digits would have sufficed — and the recall probe read the other's as leaky), and
+  regeneration removes the need for the promise: no filter has to work against
+  worlds that do not exist until the seed draws them.
+
+- **What was proven is a property of the meter, not of any agent.** Sensitivity: the
+  scripted A0 ceiling, 0.44–0.72 across 13 specs. Specificity: the predicate-follower
+  at 1.00 everywhere (regeneration leaves the task solvable) and the re-key null on
+  the same memorizer (the reading comes from the branch flip alone). Live-model
+  statements ride on the live strata comparisons and are n-limited until the sweep
+  across spec shapes lands.
 
 ## Scope and milestones
 

@@ -39,9 +39,10 @@ class TaskView:
         tools = json.dumps(tool_catalog(), indent=2)
         return (
             "You are a customer-service agent operating a retail backend. Follow the "
-            "policy exactly. You act by calling tools. On each of your turns, reply "
-            "with EXACTLY ONE JSON object and nothing else, one of:\n"
+            "policy exactly. You act by calling tools or messaging the user. On each "
+            "of your turns, reply with EXACTLY ONE JSON object and nothing else, one of:\n"
             '  {"tool": "<tool_name>", "arguments": { ... }}\n'
+            '  {"respond": "<message to the user>"}   // ask for or confirm information\n'
             '  {"stop": true}   // when the task is fully handled\n\n'
             f"POLICY:\n{policy_wiki()}\n\n"
             f"TOOLS (JSON schemas):\n{tools}\n"
@@ -50,7 +51,9 @@ class TaskView:
 
 def _is_action_shaped(obj: Any) -> bool:
     return isinstance(obj, dict) and (
-        obj.get("stop") is True or bool(obj.get("tool") or obj.get("name"))
+        obj.get("stop") is True
+        or "respond" in obj
+        or bool(obj.get("tool") or obj.get("name"))
     )
 
 
@@ -64,6 +67,8 @@ def parse_action(text: str) -> Action:
     obj = candidates[-1]
     if obj.get("stop") is True:
         return Action(name="stop")
+    if "respond" in obj:
+        return Action(name="respond", kwargs={"content": str(obj["respond"])})
     name = obj.get("tool") or obj.get("name")
     return Action(name=name, kwargs=obj.get("arguments") or obj.get("kwargs") or {})
 

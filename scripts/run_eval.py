@@ -45,11 +45,24 @@ def main() -> None:
                     help="branch-selection instances instead of cosmetic re-key")
     ap.add_argument("--user-sim", choices=list(SIM_ARGV), default=None,
                     help="mediate via a CLI user simulator (comparable=True)")
+    ap.add_argument("--block", default=None, metavar="TOOL[,TOOL]",
+                    help="observation ablation: these tools return an outage error "
+                         "(positive control — forces reliance on weights; see "
+                         "docs/receipts/RECALL_PROBE.md)")
     ap.add_argument("--verbose", action="store_true", help="print the transcript per trial")
     args = ap.parse_args()
 
     domain = DOMAINS[args.domain]
     tools = domain.tools()
+    if args.block:
+        class _Blocked:
+            @staticmethod
+            def invoke(data=None, **kwargs):
+                return "Error: this service is temporarily unavailable"
+        for name in args.block.split(","):
+            if name not in tools:
+                ap.error(f"--block: unknown tool {name!r}")
+            tools = {**tools, name: _Blocked}
     agent = AGENTS[args.agent](timeout_s=args.timeout)
     successes = 0
     for t in range(args.trials):
@@ -63,8 +76,10 @@ def main() -> None:
         res = run_episode(agent, inst, tools, max_steps=args.max_steps, user_sim=sim)
         successes += int(res.success)
         branch = f" branch={inst.branch}" if args.branch else ""
+        err = f" error={res.error!r}" if res.error else ""
         print(f"  seed={seed} success={res.success} r_state={res.r_state} "
-              f"r_outputs={res.r_outputs} comparable={res.comparable}{branch}")
+              f"r_outputs={res.r_outputs} comparable={res.comparable}{branch}{err}",
+              flush=True)
         if args.verbose:
             for turn in res.transcript:
                 print(f"    [{turn['role']}] {turn['content'][:160]}")

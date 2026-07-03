@@ -42,6 +42,15 @@ def _digits(rng: random.Random, n: int) -> str:
     return "".join(rng.choice(string.digits) for _ in range(n))
 
 
+def _letters(rng: random.Random, run: str) -> str:
+    """Same-length, case-matching random letters (for digit-less ids like airline's
+    six-uppercase reservation codes)."""
+    return "".join(
+        rng.choice(string.ascii_uppercase if c.isupper() else string.ascii_lowercase)
+        for c in run
+    )
+
+
 def _collect(data: Any, id_collections: Set[str]) -> set:
     """All id strings in the instance: the keys of every dict that sits under a field
     named in `id_collections`. Schema-agnostic given that small descriptor, so
@@ -70,12 +79,15 @@ def _collect(data: Any, id_collections: Set[str]) -> set:
 
 def _mint(rng: random.Random, old: str) -> str:
     """Format-preserving fresh id: regenerate every maximal digit run and leave the
-    non-digit structure intact ('#W', 'credit_card_', 'HAT', 'yusuf_rossi_'). Works
-    across schemas with no namespace knowledge."""
-    new = re.sub(r"\d+", lambda m: _digits(rng, len(m.group())), old)
-    if new == old:  # no digits to vary; append a suffix so it is still fresh
-        new = f"{old}_{_digits(rng, 4)}"
-    return new
+    non-digit structure intact ('#W', 'credit_card_', 'HAT', 'yusuf_rossi_'); for
+    digit-less ids (airline's 'HXDUBJ'), regenerate letter runs case-preservingly
+    instead. Same-length output, so the original can never survive as a substring —
+    the old suffix fallback embedded it ('XEWRD9' -> 'XEWRD9_3602'), a leak the
+    soundness audit caught on every digit-less airline reservation id. Collisions
+    (new == old) are re-rolled by the caller."""
+    if re.search(r"\d", old):
+        return re.sub(r"\d+", lambda m: _digits(rng, len(m.group())), old)
+    return re.sub(r"[A-Za-z]+", lambda m: _letters(rng, m.group()), old)
 
 
 def _all_strings(obj: Any, out: set) -> set:

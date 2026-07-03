@@ -56,6 +56,8 @@ class CLIUserSim:
         out = self._run(self._build_prompt()).strip()
         # keep the marker standalone-detectable even if the model pads around it
         line = out.splitlines()[0].strip() if out else ""
+        while line.startswith("[user]"):        # models sometimes echo the transcript format
+            line = line[len("[user]"):].strip()
         self.history.append({"role": "user", "content": line})
         return line
 

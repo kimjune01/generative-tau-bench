@@ -15,6 +15,11 @@ def test_parse_picks_last_action_over_echoed_schema():
     assert a.name == "get_order_details" and a.kwargs == {"order_id": "#W1"}
 
 
+def test_parse_respond():
+    a = parse_action('{"respond": "Could you share your zip code?"}')
+    assert a.name == "respond" and a.kwargs == {"content": "Could you share your zip code?"}
+
+
 def test_parse_stop_and_missing():
     assert parse_action('done {"stop": true}').name == "stop"
     try:

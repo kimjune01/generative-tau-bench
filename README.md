@@ -29,7 +29,23 @@ plus per-domain descriptors:
 
 "Faithful" = re-keying preserves each golden's error pattern position-for-position,
 the re-keyed golden reaches its own oracle (determinism), no original id leaks
-(coverage), and the id map is injective. Full suite: 7 tests passing.
+(coverage), and the id map is injective. Full suite: 100+ tests passing.
+
+Beyond re-keying, **parametric branch-selection** is built and validated on a
+**13-task retail family** (`gtau/branch.py`; inventory in
+[`docs/BRANCHABLE_TASKS.md`](docs/BRANCHABLE_TASKS.md)): the seed resamples the
+catalog content that decides which authored branch of a conditional instruction
+fires, the golden re-derives by the instruction's own predicate, and a
+shipped-golden replayer (adversary A0) loses **0.44–0.72** in pass rate while a
+predicate-following policy stays at 1.00 — the memorization gap cosmetic re-keying
+cannot open. A CLI-driven user simulator (`gtau/usersim.py`, tau-bench's simulator
+prompt verbatim) removes the intent-leak so episodes grade `comparable=True`.
+
+Receipts (each with command, commit, and date, in [`docs/receipts/`](docs/receipts/)):
+the scaled soundness audit (thousands of instances, invalid rate 0 — after the
+audit itself caught and we fixed an id-leak the small test suite missed) and the
+power/cost analysis (the static 115/50-task sets cannot resolve realistic harness
+gaps; the generator restores power at zero marginal annotation).
 
 Honest scope (see [`docs/GENERALIZATION_ASSESSMENT.md`](docs/GENERALIZATION_ASSESSMENT.md)):
 this proves the engine is *schema-general within the τ-bench family*. It does **not**
