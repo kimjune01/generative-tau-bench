@@ -568,6 +568,73 @@ RETAIL_107 = CatalogBranchSpec(
 )
 
 
+# --- retail task 29: shorter (28-inch) bamboo skateboard, most expensive if several -----
+
+_SKATEBOARD = "1968349452"
+
+RETAIL_29 = CatalogBranchSpec(
+    domain="retail",
+    base_task_index=29,
+    worlds=[
+        World("8176740019", {}),                                                         # == shipped (argmax)
+        World("6673921677", {(_SKATEBOARD, "8176740019"): False}),
+        World("6843647669", {(_SKATEBOARD, "8176740019"): False, (_SKATEBOARD, "6673921677"): False}),
+    ],
+    selector=BestAvailable(_SKATEBOARD, key=_price,
+                           where={"deck material": "bamboo", "length": "28 inch"}, reverse=True),
+    shipped_branch="8176740019",
+    shipped_target="8176740019",
+    notes="argmax price over available 28-inch bamboo skateboards ($208.60/$189.57/$180.10); "
+          "second exchange leg invariant; shipped outputs quote the option prices (co-vary, "
+          "not re-derived here — soundness is on end-state)",
+)
+
+
+# --- retail task 74: i9 laptop, prefer 256GB SSD then silver (cascade) ------------------
+
+_LAPTOP = "4760268021"
+
+RETAIL_74 = CatalogBranchSpec(
+    domain="retail",
+    base_task_index=74,
+    worlds=[
+        World("3265035808", {}),                                                         # == shipped (256GB silver i9)
+        World("2913673670", {(_LAPTOP, "3265035808"): False}),
+    ],
+    selector=FirstAvailable(_LAPTOP, ["3265035808", "2913673670"]),
+    shipped_branch="3265035808",
+    shipped_target="3265035808",
+    notes="i9 laptop, prefer 256GB then silver; the two available i9 variants are "
+          "3265035808 (256GB silver) and 2913673670 (512GB black); cancel leg invariant",
+)
+
+
+# --- retail tasks 110/111: cheapest tablet (argmin price) -------------------------------
+
+_TABLET = "8024098596"
+
+
+def _cheapest_tablet_spec(index: int) -> CatalogBranchSpec:
+    return CatalogBranchSpec(
+        domain="retail",
+        base_task_index=index,
+        worlds=[
+            World("2106335193", {}),                                                     # == shipped (argmin $903.95)
+            World("4913411651", {(_TABLET, "2106335193"): False}),                       # -> $941.03
+            World("6948061616", {(_TABLET, "2106335193"): False, (_TABLET, "4913411651"): False}),  # -> $950.96
+        ],
+        selector=BestAvailable(_TABLET, key=_price),
+        shipped_branch="2106335193",
+        shipped_target="2106335193",
+        notes="cheapest available tablet (argmin price); every realizable argmin stays below "
+              "the owned tablet ($1018.68) so the modify is never a no-op; address legs invariant",
+    )
+
+
+RETAIL_110 = _cheapest_tablet_spec(110)
+RETAIL_111 = _cheapest_tablet_spec(111)
+
+
 BranchSpec = Union[ExchangeBranchSpec, CatalogBranchSpec]
 
 BRANCH_SPECS: Dict[str, BranchSpec] = {
@@ -584,6 +651,10 @@ BRANCH_SPECS: Dict[str, BranchSpec] = {
     "retail:97": RETAIL_97,
     "retail:98": RETAIL_98,
     "retail:107": RETAIL_107,
+    "retail:29": RETAIL_29,
+    "retail:74": RETAIL_74,
+    "retail:110": RETAIL_110,
+    "retail:111": RETAIL_111,
 }
 
 

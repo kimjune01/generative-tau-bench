@@ -3,6 +3,61 @@
 Process notes, dead ends, and mistakes. Standing results live in `docs/receipts/` and
 `DESIGN.md`; this file is where the wrong turns are recorded so the receipts stay clean.
 
+## 2026-07-03 (cont.) — widening the spec pool (for effective-n; chose this before step-4 pilot)
+
+Goal: ~40 specs so a cluster-robust analysis can carry "powered" (13 specs → n_eff dies).
+Reality check from authoring: the easy variant-availability well is nearly dry.
+- Of the 14 inventoried EASY tasks, 13 are already specs; the last (retail 83) pivots on an
+  ORDER FIELD (payment method), not variant availability → needs a new resampler axis.
+- Added 4 clean specs from the MEDIUM tier that fit the existing CatalogBranchSpec machinery:
+  retail 29 (argmax price, 28-inch bamboo), 74 (i9 laptop cascade 256GB→silver), 110 & 111
+  (cheapest tablet, argmin). All validated: branches fire, per-branch oracle determinism,
+  distinct end-states, zero tool errors, over 240 seeds each. Now 17 specs.
+- Candidates that DON'T cheaply fit (surfaced while authoring): 52 (camera max-zoom) and 77
+  (perfume max-size) are DEGENERATE — toggling the target off leaves a tie / self-exchange,
+  so only one realizable branch (BestAvailable raises on ties by design). 35 (multi-attribute
+  laptop cascade) is a construct-validity judgment the audit can't check. Many remaining
+  MEDIUM/HARD pivot on order status / payment / price / quantity (new resampler axes) or are
+  airline (new schema).
+- Highest-leverage next addition: a CARDINALITY selector ("X if *multiple* colors/options")
+  unlocks ~7 (retail 45, 60, 70, 71, 72, 102, 103) + the 2-way existence pairs 99/100 — one
+  new selector → ~9 specs, getting ~17→~26. Reaching 40 then still needs order-field/price
+  pivots (new machinery) and/or airline. So "widen to 40" is a real multi-step grind, not an
+  afternoon; flagged for the user.
+
+## 2026-07-03 (cont.) — step-4 impact demo: Fable design review before spending compute
+
+Asked Fable to validate the plan (Composer-2.5 vs Opus-4.8; Opus low vs high, paired-CRN
+McNemar on branch-selection). Verdict: the plan as stated is the WRONG instrument. Kept
+corrections:
+- **Pair 1 (Composer vs Opus) is wrong for step 4.** A big capability gap is resolved by
+  static n=115 too (MDE 15-18), so it fails the "tied on static" premise → zero evidence for
+  the generator's value. Plus capability×contamination confound (and "Composer uncontaminated"
+  is refuted by our own RECALL_PROBE: declining is threefold ambiguous). Park Pair 1 in the
+  rung-5/discussion contamination material, not step 4.
+- **Drop "flips," aim for "resolves a tie."** Our own SHIPPED_ABLATION (recall behaviorally
+  inert) predicts no sign-reversal.
+- **Goldilocks gap ≈ [8,15] pts.** Static blind below ~15; paired generative at feasible n
+  (~400-600 paired) sees ~8. Pair 2 (Opus low vs high) is the clean instrument (same weights,
+  same contamination, controls all but compute) and PLAUSIBLY in-window — but could be <5
+  (infeasible). A PILOT gates everything: ~60-100 paired episodes to estimate gap, discordance
+  ψ, and within-spec ICC; plug Connor's formula; check required n is affordable.
+- **Run the static arm empirically** (115 tasks, same harness/sim, paired McNemar p>.05, CI
+  spanning zero) — don't just cite the MDE table as the "tied" leg.
+- **The generator's gift is n, not pairing.** Pairing is free on static too (McNemar on 115;
+  our own receipt: paired power 0.107). The generator lifts the n-cap while keeping pairing.
+  Reframe the headline accordingly.
+- **BIGGEST hole — effective n / clustering.** 13 specs × N seeds: within-spec seeds are
+  near-replicates (branch flip ≈ 1 bit), correlated, so McNemar's independent-pairs assumption
+  inflates n. n_eff = n/(1+(m-1)ICC); 13×40 at ICC 0.3 → n_eff ~40. Kills the "powered" headline.
+  Fix: cluster-robust analysis (cluster bootstrap / spec-level) AND widen the spec pool to
+  ~40 (we have 76 state-testable tasks inventoried; 40×10 beats 13×31 by ~3× effective n).
+- User-sim family confound: pin a third-family sim, same version both arms (hard right now —
+  codex/OpenAI out ~3 days).
+- Honest two-stage design: declared pilot → pre-registered confirmatory on committed seeds,
+  cluster-robust McNemar + empirical static arm. "Small-n, flip one" is honest only if ONE is
+  chosen before the data.
+
 ## 2026-07-03 (cont.) — AppWorld as the independent second domain (proof-ladder step 6)
 
 Chose AppWorld over WorkArena (local Python, no ServiceNow/browser; same replay-oracle
