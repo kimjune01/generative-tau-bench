@@ -20,15 +20,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from gtau.generate import generate
+from gtau.generate import generate, Instance
+from gtau.action import Action
+from gtau.replay import oracle_hash
 from gtau.branch import BRANCH_SPECS, generate_branch_instance
 from gtau.eval import run_episode
 from gtau.metrics import pass_hat_k, pass_at_k
-from gtau.adapters.cli_agent import claude_adapter, codex_adapter
+from gtau.adapters.cli_agent import claude_adapter, codex_adapter, cursor_adapter
 from gtau.domains import DOMAINS
 from gtau.usersim import CLIUserSim
 
-AGENTS = {"claude": claude_adapter, "codex": codex_adapter}
+AGENTS = {"claude": claude_adapter, "codex": codex_adapter, "cursor": cursor_adapter}
 SIM_ARGV = {"claude": ["claude", "-p"], "codex": ["codex", "exec"]}
 
 
@@ -43,6 +45,11 @@ def main() -> None:
     ap.add_argument("--timeout", type=int, default=300)
     ap.add_argument("--branch", action="store_true",
                     help="branch-selection instances instead of cosmetic re-key")
+    ap.add_argument("--shipped", action="store_true",
+                    help="run the ORIGINAL shipped task (identity, no regeneration) so "
+                         "the memorized golden is correct — the discriminating positive "
+                         "control: with --block, memory can substitute for observation "
+                         "(see docs/receipts/RECALL_PROBE.md)")
     ap.add_argument("--user-sim", choices=list(SIM_ARGV), default=None,
                     help="mediate via a CLI user simulator (comparable=True)")
     ap.add_argument("--block", default=None, metavar="TOOL[,TOOL]",
@@ -64,10 +71,26 @@ def main() -> None:
                 ap.error(f"--block: unknown tool {name!r}")
             tools = {**tools, name: _Blocked}
     agent = AGENTS[args.agent](timeout_s=args.timeout)
+
+    shipped_inst = None
+    if args.shipped:
+        base_task = domain.tasks()[args.task]
+        data = domain.load_data()
+        golden = [Action.from_tau(a) for a in base_task.actions]
+        shipped_inst = Instance(
+            seed=0, data=data, golden=golden,
+            instruction=base_task.instruction,
+            outputs=list(getattr(base_task, "outputs", []) or []),
+            oracle=oracle_hash(golden, data, domain.tools()),
+            domain=domain.name, mapping={},
+        )
+
     successes = 0
     for t in range(args.trials):
         seed = args.seed_base + t
-        if args.branch:
+        if args.shipped:
+            inst = shipped_inst
+        elif args.branch:
             spec = BRANCH_SPECS[f"{args.domain}:{args.task}"]
             inst = generate_branch_instance(spec, seed)
         else:

@@ -562,13 +562,21 @@ wrong axis. Disambiguate the n's:
    Report `pass^k` with CIs stratified by difficulty class, and quantify the
    variance reduction from paired seeds vs independent sampling (McNemar). Small-n
    by design: flip *one* comparison, don't survey many.
-5. **The cross-class boundary experiment (compute, THE empirical contribution).** This is
+5. **The cross-class boundary experiment (THE empirical contribution). Construction-level
+   DONE** (`docs/receipts/BOUNDARY.md`, `scripts/boundary_experiment.py`). This is
    what the fan-out surfaced and what codex says the paper survives on: don't just show a
    contamination gap on τ-bench, *map the boundary*. Memorize a static baseline, then show
    the gap **fires on the equivariant classes** (τ-bench, WorkArena: scored trajectory
    co-varies) and **stays null on the invariant ones** (text-to-SQL, competitive coding:
    scored artifact is a state-general program). That double result is precondition 5
    validated empirically, and no one has drawn this boundary for benchmark regeneration.
+   The construction-level receipt does it on ONE substrate (retail DB, one resampler),
+   varying only the scored target: a perfectly-leaked SQL *query* passes **1.00** of
+   regenerated instances (regeneration wasted) while a leaked *answer* graded by a
+   replay-derived oracle collapses to `1 - (answer-moved-rate)` (~0.15). Framed as a
+   bench-builder's decision rule: score the state, derive the golden by replay. The
+   remaining live version (a *contaminated model* read flat on regenerated Spider,
+   non-null on τ-bench) is the natural extension.
    Caveats: a null gap on the OUT side is the *predicted* result (not a failure); on the IN
    side, a non-null gap is not automatically memorization (Recht's ImageNet-v2 drop was
    harder-reconstruction) — isolate with rank-preservation / gap-decomposition.
@@ -714,6 +722,20 @@ Staging for the paper's discussion section. Every claim here traces to a receipt
   digits would have sufficed — and the recall probe read the other's as leaky), and
   regeneration removes the need for the promise: no filter has to work against
   worlds that do not exist until the seed draws them.
+
+- **The clean positive control: memory that is provably present and provably correct
+  is still behaviorally inert.** The seeded ablation is confounded (on a regenerated
+  world the memorized golden is *wrong*, so failure could be ignorance). The
+  discriminating control runs the ablation on the *shipped* world, where claude's
+  memorized ids are exactly the ground truth (`SHIPPED_ABLATION.md`): 0.667 with the
+  catalog readable, **0.000** with it blocked. Claude retries the outage and refuses
+  to confirm the variant rather than plugging in the `7706410293` it recites
+  digit-perfect. The mechanism is policy-grounding: the retail wiki requires
+  confirming the target variant, and the agent follows the task over its priors, so
+  the refusal is contingent on the policy demanding observation, and bounds A0/A1
+  behavioral reliance for a policy-following agent, not A2. This refuted the naive
+  prediction (logged in `RECALL_PROBE.md`) that correct memory would substitute for a
+  blocked observation; the truth is stronger for the meter.
 
 - **What was proven is a property of the meter, not of any agent.** Sensitivity: the
   scripted A0 ceiling, 0.44–0.72 across 13 specs. Specificity: the predicate-follower

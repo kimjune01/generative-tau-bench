@@ -32,6 +32,19 @@ One structural error: it claimed goldens annotate only DB-writing calls; the
 shipped action list includes the four reads. The substance — the write action
 and all its arguments — is verbatim.
 
+## composer-2.5 (Cursor CLI, `cursor-agent --model composer-2.5`): declines
+
+Added 2026-07-03. Same prompt. Declined cleanly: "I don't know those specifics from
+memory… I do not have a reliable recall of retail test set task 0, Yusuf Rossi, his
+instruction, or the golden action sequence." Correct on paper-level facts (Sierra,
+2024, retail domain, golden tool-call trajectories), dark on every instance-level
+detail — the same fade-not-cliff shape as codex. So Composer is **uncontaminated on
+task 0** (or trained not to recite it): it sits in codex's bucket, not claude's.
+Consequence for the weaker-model question (see SHIPPED_ABLATION.md): Composer cannot
+test "does a weaker model *refuse* to use memory," because it has no task-0 memory to
+refuse. Weaker ≠ contaminated; contamination tracks broad benchmark-file scraping,
+which a Cursor-trained model largely escapes.
+
 ## codex (OpenAI Codex CLI, gpt-5.5): declines
 
 "I don't know the exact instruction or golden action sequence for tau-bench
@@ -56,14 +69,22 @@ knowledge boundary). Black-box caveat: absence of recall is still not absence in
 weights; the completion probe is the strongest available negative short of
 logprob access.
 
-Cross-model prediction this licenses (falsifiable, cheap): under free
+Cross-model prediction this licensed (falsifiable, cheap): under free
 observation both models should read flat on the branch meter; under observation
 ablation (`--block get_product_details`), claude can still pass shipped-branch
 worlds from weights, while gpt-5.5, lacking the digits, must fail or ask on all
-worlds. If ablated codex nonetheless produces the shipped item ids, its recall
-silence was refusal after all, and the behavioral meter will have caught what
-three recall probes could not — which would itself be the paper's best
-illustration of why behavioral metering outranks confession.
+worlds.
+
+**Outcome (2026-07-03): the claude half of this prediction was tested and refuted.**
+Run on the *shipped* world (identity, where the memorized golden is exactly correct;
+`SHIPPED_ABLATION.md`), claude scored 0.667 with observation and **0.000** with
+`get_product_details` blocked — it retries the outage and tells the user it cannot
+confirm the variant, never plugging in the `7706410293` it recites digit-perfect. It
+does **not** substitute weights for a blocked observation; it grounds on the tool
+(the retail policy requires confirming the target variant, and claude follows the
+policy over its priors). So contamination is present *and behaviorally inert even
+when the memory is correct* — a stronger result than the prediction, and it means the
+codex ablation-produces-shipped-ids escape hatch is moot for this agent.
 
 ## Why this matters here
 

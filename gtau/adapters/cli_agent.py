@@ -72,3 +72,19 @@ def claude_adapter(timeout_s: int = 300) -> CLIAgentAdapter:
 def codex_adapter(timeout_s: int = 300) -> CLIAgentAdapter:
     # Codex non-interactive: `codex exec "<prompt>"` prints the final message.
     return CLIAgentAdapter(name="codex", argv=["codex", "exec"], timeout_s=timeout_s)
+
+
+def cursor_adapter(timeout_s: int = 300, model: str = "composer-2.5") -> CLIAgentAdapter:
+    # Cursor CLI headless: `cursor-agent -p --trust --mode ask --model <m> "<prompt>"`.
+    # ask-mode keeps it read-only (no shell/write on the real machine); it only emits
+    # the one JSON action our harness executes. Full path: ~/.local/bin is not always
+    # on the venv PATH. Lets us drop a genuinely lighter agent (Composer) in as the SUT.
+    import os
+    binp = os.path.expanduser("~/.local/bin/cursor-agent")
+    exe = binp if os.path.exists(binp) else "cursor-agent"
+    return CLIAgentAdapter(
+        name=f"cursor:{model}",
+        argv=[exe, "-p", "--trust", "--mode", "ask", "--output-format", "text",
+              "--model", model],
+        timeout_s=timeout_s,
+    )
