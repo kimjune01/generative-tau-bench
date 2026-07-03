@@ -581,12 +581,23 @@ wrong axis. Disambiguate the n's:
    side, a non-null gap is not automatically memorization (Recht's ImageNet-v2 drop was
    harder-reconstruction) — isolate with rank-preservation / gap-decomposition.
 
-6. **Independent second demonstration: WorkArena, with a circularity guard.** WorkArena
-   ships `setup()`/`cheat()`/`validate()`, so a lazy "call their hooks" demo proves nothing.
-   The non-circular version must: regenerate state *beyond* the released fixed configs,
-   re-run the independent `cheat()`/reference to derive the oracle on the *new* state, and
-   show a memorization baseline collapses while a capable agent still solves. Only-shipped-
-   seeds = weak. This is the independent, non-τ-bench point the two τ-bench domains cannot be.
+6. **Independent second demonstration. DONE on AppWorld** (`docs/receipts/APPWORLD_INDEPENDENT.md`),
+   not WorkArena (deferred on infra cost: ServiceNow + browser). AppWorld (Stony Brook, ACL
+   2024) is a local DB-backed tool-agent benchmark with deterministic state-diff grading and
+   a runnable seeded generator. Using its *own* generator (so this corroborates the
+   regenerate+replay pattern in an independently built domain, not a port of our code), we
+   regenerated 12 train scenarios at a **held-out seed** — state beyond the shipped configs,
+   new users and answers — and the pipeline ran end-to-end on fresh state (12/12; a
+   self-consistency check, not a soundness proof). On the 15 answer-type instances (of 36; the
+   other 21 are state-mutation, needing the trajectory-replay adversary), an A0 that memorized
+   the shipped answers survives **2/15 = 0.13** on held-out state — both are answer collisions
+   (0/13 on distinct-answer instances, n small); the control (own fresh answer) passes 15/15,
+   showing the harness accepts the correct answer. So the gap is exactly where regeneration
+   moves the scored value off the memorized one — precondition 5 on independent ground. Honest
+   scope: A0 is the floor (scalar memorization); state-mutation trajectory-replay is the
+   stronger adversary (future work); "independent" is independent-*within-genus* (both DB-backed
+   tool-agent) — a modality-distant domain (WorkArena) remains the stretch. The lazy "call
+   their hooks on shipped seeds" version is explicitly avoided.
 
 ### The guardrail: more than a position paper, not a study
 
