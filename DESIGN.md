@@ -556,12 +556,23 @@ wrong axis. Disambiguate the n's:
    certified clean (`_mint`'s suffix fallback embedded the original id in every
    digit-less airline reservation code; fixed by same-length letter-run
    regeneration). The audit paying for itself is the receipt's own argument.
-4. **Impact demo (small compute, the money shot).** Show the mechanism *changes a
-   conclusion*: a harness A-vs-B comparison that is tied or misleading on static
-   τ-bench resolves or flips under powered, same-seed-paired generative evaluation.
-   Report `pass^k` with CIs stratified by difficulty class, and quantify the
-   variance reduction from paired seeds vs independent sampling (McNemar). Small-n
-   by design: flip *one* comparison, don't survey many.
+4. **Impact demo (the money shot). PILOTED; confirmatory is pre-registered future work**
+   (`docs/receipts/PILOT_EFFORT.md`). The claim: a harness A-vs-B comparison *tied on
+   static τ-bench* (n=115, MDE 15–18) *resolves* under paired generative evaluation. Piloted
+   with the clean instrument — Opus 4.8 at low vs high reasoning effort (same weights, same
+   contamination, only compute differs). Findings that scope the confirmatory: (a) the
+   harness is sound (a high-effort failure re-ran and passed cleanly — genuine agent
+   behavior, not a parse/max-steps artifact); (b) the per-instance outcome is **stochastic
+   across runs**, so CRN pairing fixes the *instance* but not agent/sim noise — a
+   single-trial gap is not identifiable; (c) two cost-inflators stack — within-spec
+   ICC ≈ 0.48 and that un-CRN'd stochasticity — so a powered confirmatory needs *many specs
+   AND multiple trials per instance*, beyond the current budget. Reframe kept from the
+   pilot: **the generator's gift is unbounded n, not pairing** (pairing/McNemar is free on
+   the static 115 too — our own power receipt shows paired power 0.107 there; the generator
+   lifts the n-cap *while keeping* pairing). Deferred to a cross-model pair (larger, cleaner
+   gap) once OpenAI/codex access returns; the Opus-effort-tier gap is small and noisy and is
+   a weak instrument. Report `pass^k` at small k as a stratified illustration only (pass^1 is
+   the powered metric; p→p⁸ crushes the gap). Small-n by design: flip *one* comparison.
 5. **The cross-class boundary experiment (THE empirical contribution). Construction-level
    DONE** (`docs/receipts/BOUNDARY.md`, `scripts/boundary_experiment.py`). This is
    what the fan-out surfaced and what codex says the paper survives on: don't just show a
@@ -601,14 +612,18 @@ wrong axis. Disambiguate the n's:
 
 ### The guardrail: more than a position paper, not a study
 
-Minimum to clear codex's "position paper" bar without a large empirical study: the working
-schema-agnostic generator (have it, τ-bench retail+airline), the soundness audit (step 3),
-one **independent** second instantiation (WorkArena, step 6 — *not* just a second τ-bench
-domain), and the cross-class boundary experiment (step 5), which is the thing that makes it
-a method and not "known machinery applied to τ-bench." The explicit τ²-bench oracle-code
-comparison is now done (see "The delta versus τ²-bench"): the delta survives but narrows
-to the freshness-protocol assembly, and "generation is grading" must be cited to τ-bench,
-not claimed.
+Minimum to clear codex's "position paper" bar without a large empirical study — **all four
+now met**: the working schema-agnostic generator (τ-bench retail+airline, 25 branch specs),
+the soundness audit (step 3, DONE), one **independent** second instantiation (step 6, DONE
+on **AppWorld** — not WorkArena, deferred on infra; a held-out-seed method run, both
+boundary sides), and the cross-class boundary experiment (step 5, DONE — construction +
+in-context learner). That set is what makes it a method, not "known machinery applied to
+τ-bench." The impact demo (step 4) is an *enhancement above* this bar, not part of it: it is
+piloted and pre-registered as future work (the Opus-effort-tier gap is small/noisy and the
+confirmatory is over budget; a cross-model pair awaits access). The explicit τ²-bench
+oracle-code comparison is done (see "The delta versus τ²-bench"): the delta survives but
+narrows to the freshness-protocol assembly, and "generation is grading" must be cited to
+τ-bench, not claimed.
 
 ## Risks and honest limits
 
