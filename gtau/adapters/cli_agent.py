@@ -64,9 +64,15 @@ class CLIAgentAdapter(AgentAdapter):
         return proc.stdout
 
 
-def claude_adapter(timeout_s: int = 300) -> CLIAgentAdapter:
-    # Claude Code headless: `claude -p "<prompt>"` prints the final text.
-    return CLIAgentAdapter(name="claude", argv=["claude", "-p"], timeout_s=timeout_s)
+def claude_adapter(timeout_s: int = 300, effort: str = None) -> CLIAgentAdapter:
+    # Claude Code headless: `claude -p "<prompt>"` prints the final text. `effort`
+    # (low|medium|high|xhigh|max) pins the reasoning tier on one model (Opus) — the clean
+    # same-weights, same-contamination A-vs-B arm for the impact demo.
+    argv = ["claude", "-p"]
+    if effort:
+        argv += ["--effort", effort, "--model", "opus"]
+    name = f"claude:{effort}" if effort else "claude"
+    return CLIAgentAdapter(name=name, argv=argv, timeout_s=timeout_s)
 
 
 def codex_adapter(timeout_s: int = 300) -> CLIAgentAdapter:

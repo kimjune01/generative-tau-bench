@@ -84,6 +84,26 @@ corrections:
   cluster-robust McNemar + empirical static arm. "Small-n, flip one" is honest only if ONE is
   chosen before the data.
 
+## 2026-07-03 (cont.) — step-4 pilot ran (Opus low vs high effort)
+
+Model-access detour: Cursor free plan blocks named models (`ActionRequiredError: Named
+models unavailable`), so opus-4-8-low/high via cursor-agent is out (composer-2.5/auto only);
+codex/OpenAI out ~3 days. BUT Claude Code exposes `--effort low|medium|high|xhigh|max` on
+Opus directly → the clean same-weights A-vs-B instrument, unblocked. Wired `--claude-effort`
+into run_eval and `effort` into claude_adapter.
+
+Pilot (`scripts/pilot_effort.py`, receipt `PILOT_EFFORT.{md,log}`), 10 specs × 2 seeds:
+- low pass 0.500, high pass 0.400 (gap −0.10), ψ=0.30, within-spec ICC(diff) ≈ 0.48.
+- **Harness sound, gap NOT established.** A high-effort pilot failure (60:s1) re-ran and
+  PASSED (clean trajectory, no parse/max-steps error) → failures are genuine agent behavior,
+  and the per-instance outcome is STOCHASTIC across runs. CRN fixes the instance, not agent/
+  sim noise (Fable's caveat, confirmed). Single-trial n=20 can't resolve a 10-pt gap.
+- Suggestive only: low ≥ high (discordant 4:2 for low — high effort maybe overthinking
+  agentic tasks). Two cost-inflators stack (ICC 0.48 + un-CRN'd stochasticity) → confirmatory
+  is much more expensive than Fable's ballpark (need many specs AND multi-trial per instance).
+- Decision pending (user): multi-trial mini-pilot to pin the gap; OR defer to a cross-model
+  pair when codex returns; OR carry step 4 as pre-registered future work with these numbers.
+
 ## 2026-07-03 (cont.) — AppWorld as the independent second domain (proof-ladder step 6)
 
 Chose AppWorld over WorkArena (local Python, no ServiceNow/browser; same replay-oracle

@@ -56,6 +56,13 @@ def main() -> None:
                     help="observation ablation: these tools return an outage error "
                          "(positive control — forces reliance on weights; see "
                          "docs/receipts/RECALL_PROBE.md)")
+    ap.add_argument("--cursor-model", default=None,
+                    help="model id for --agent cursor (e.g. claude-opus-4-8-low / -high); "
+                         "see `cursor-agent --list-models`")
+    ap.add_argument("--claude-effort", default=None,
+                    choices=["low", "medium", "high", "xhigh", "max"],
+                    help="reasoning-effort tier for --agent claude (Opus); the impact-demo "
+                         "A-vs-B arm (same weights, only compute differs)")
     ap.add_argument("--verbose", action="store_true", help="print the transcript per trial")
     args = ap.parse_args()
 
@@ -70,7 +77,12 @@ def main() -> None:
             if name not in tools:
                 ap.error(f"--block: unknown tool {name!r}")
             tools = {**tools, name: _Blocked}
-    agent = AGENTS[args.agent](timeout_s=args.timeout)
+    if args.agent == "cursor" and args.cursor_model:
+        agent = cursor_adapter(timeout_s=args.timeout, model=args.cursor_model)
+    elif args.agent == "claude" and args.claude_effort:
+        agent = claude_adapter(timeout_s=args.timeout, effort=args.claude_effort)
+    else:
+        agent = AGENTS[args.agent](timeout_s=args.timeout)
 
     shipped_inst = None
     if args.shipped:

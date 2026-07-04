@@ -1,0 +1,36 @@
+# pilot: low-vs-high, 10 specs x 2 seeds
+  retail:44 seed=0 low=1 high=1 branch=5320792178
+  retail:44 seed=1 low=0 high=1 branch=5320792178
+  retail:41 seed=0 low=1 high=1 branch=4068787148
+  retail:41 seed=1 low=1 high=0 branch=9665100170
+  retail:29 seed=0 low=0 high=0 branch=6673921677
+  retail:29 seed=1 low=0 high=0 branch=6673921677
+  retail:110 seed=0 low=1 high=1 branch=6948061616
+  retail:110 seed=1 low=0 high=1 branch=2106335193
+  retail:6 seed=0 low=0 high=0 branch=7453605304
+  retail:6 seed=1 low=1 high=0 branch=1569765161
+  retail:74 seed=0 low=0 high=0 branch=2913673670
+  retail:74 seed=1 low=0 high=0 branch=2913673670
+  retail:8 seed=0 low=0 high=0 branch=9083642334
+  retail:8 seed=1 low=1 high=0 branch=1270145486
+  retail:60 seed=0 low=1 high=1 branch=6077640618
+  retail:60 seed=1 low=1 high=0 branch=1646531091
+  retail:0 seed=0 low=1 high=1 branch=fallback
+  retail:0 seed=1 low=1 high=1 branch=primary
+  retail:79 seed=0 low=0 high=0 branch=fallback
+  retail:79 seed=1 low=0 high=0 branch=fallback
+
+# n=20  low pass=0.500  high pass=0.400  gap=-0.100
+# McNemar cells (low,high): 11=6 10=4 01=2 00=8  discordant=6  psi=0.300
+# within-spec ICC(diff) ~= 0.483  (0 = seeds independent within spec)
+# per-spec (low,high) pass counts:
+#   retail:44: low=1/2 high=2/2
+#   retail:41: low=2/2 high=1/2
+#   retail:29: low=0/2 high=0/2
+#   retail:110: low=1/2 high=2/2
+#   retail:6: low=1/2 high=0/2
+#   retail:74: low=0/2 high=0/2
+#   retail:8: low=1/2 high=0/2
+#   retail:60: low=2/2 high=1/2
+#   retail:0: low=2/2 high=2/2
+#   retail:79: low=0/2 high=0/2
