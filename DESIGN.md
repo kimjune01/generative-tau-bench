@@ -143,17 +143,18 @@ That second seam is empirically anchored, and the anchor is sobering. Ruis et al
 (`2411.12580`) trace LLM reasoning to *procedural* pretraining documents (how-to-solve
 formulae and code — the same document influential across many questions in a task), not to
 memorized answers: the **method**, not the answer, is the unit a model absorbs, so it is
-learnable from data. Cobbe et al. quantify *when* that learning is skill vs. overfit — agents
-overfit an orbit-specific policy below ~4,000 procedurally generated training levels (CoinRun,
-`1812.02341`) and only close the generalization gap near ~10,000 across the fuller suite
-(ProcGen, `1912.01588`) —
+learnable from data. Cobbe et al. (CoinRun, `1812.02341`) quantify *when* that learning is
+skill vs. overfit: substantial overfitting below **4,000** procedurally generated training
+levels, still-noticeable overfitting even at **16,000**, and the gap closes only with an
+**unbounded** (fresh-every-episode) level set —
 and Mirzadeh et al. (`2410.05229`, GSM-Symbolic) show the memorized object is regeneration-
 fragile (accuracy drops when values change, drops further as clause structure grows,
 consistent with replayed reasoning templates). Read together: method-memorization is real,
 and whether it is *contamination* (orbit-specific, survives regeneration illegitimately) or
 *skill* (transfers off the orbit) is set by **orbit breadth** — the entropy axis, now with an
 empirical threshold in the thousands. That is the sobering part for a *hand-authored* orbit:
-our 25 branch templates sit orders of magnitude below CoinRun's threshold, so A1 (memorize
+our 25 branch templates sit orders of magnitude below even CoinRun's 16,000-still-overfits
+mark (which wanted an unbounded set), so A1 (memorize
 the finite template pool) is the *expected* outcome, not a hypothetical. Genuine A1-resistance
 therefore requires **structural class generation** — procedurally generating the templates
 themselves so the orbit is large — not more hand-authored branches; that is why structural
@@ -184,8 +185,9 @@ memorization." The iff is demoted to a **prediction**: the boundary experiment (
 show the gap firing on equivariant classes and staying null on invariant ones, and the
 distinctive, falsifiable version is CoinRun-style (Cobbe et al., `1812.02341`) — fine-tune on
 N public seeds, and the gap persists for held-out *families* (thesis) rather than decaying to
-zero (null: regeneration merely re-prices with no skill transfer); their thousands-of-levels
-threshold sets the scale N must reach before method-memorization becomes skill.
+zero (null: regeneration merely re-prices with no skill transfer); their finding (16,000
+levels still overfit; an unbounded set needed) sets the scale N must reach before
+method-memorization becomes skill.
 
 ## Motivation: contamination is a recognized, cross-benchmark problem
 
