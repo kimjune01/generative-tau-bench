@@ -51,6 +51,24 @@ Reality check from authoring: the easy variant-availability well is nearly dry.
   the payment/price-constrained tasks (88 with an affordable resampled price, 20, 40, 89, 64).
   Defined next step, not a grind — flagged for the user rather than shipping faithless specs.
 
+## 2026-07-06 — citation integrity pass (Sonnet subagent)
+
+Verified all ~28 arXiv ids in DESIGN/PRIOR_ART against source (3 already read this session
+skipped). Result: **25 VERIFIED, 0 MISMATCH, 0 UNRESOLVABLE, 3 PARTIAL.** The suspicious
+recent-2026 ids (2505.20411 SWE-rebench, 2602.11224 Agent-Diff, 2603.23611 LLMORPH,
+2605.07053 GSM-SEM, 2605.23965 LGMT) all resolve to real papers matching our claims — no
+fabrications. Load-bearing novelty citations (τ² 2506.07982, τ-bench 2406.12045, DyVal
+2309.17167, DyVal2 2402.14865, Benchmark Self-Evolving 2402.11443) all verified.
+Three PARTIALs fixed (framing over-attributions, not integrity failures):
+- Avalon (2210.13417): the train/test seed-split *protocol* is ProcGen's, not Avalon's —
+  relabeled so seed-split attaches to ProcGen; Avalon/ProcTHOR are seeded procedural gen.
+- CheckList (2005.04118): it's behavioral testing, not a contamination claim — relabeled as
+  our grouping; "paired contamination test" now attached specifically to PaCoST (2406.18326).
+- BetterBench (2411.12990): the specific "unique IDs / encrypt instances" mechanisms aren't
+  in the abstract (checklist body); softened to the confirmed best-practices framing, kept
+  the regenerate-vs-hide contrast general (WebFetch was 529-throttled; flagged for a body
+  check before quoting the mechanisms).
+
 ## 2026-07-03 (cont.) — step-4 impact demo: Fable design review before spending compute
 
 Asked Fable to validate the plan (Composer-2.5 vs Opus-4.8; Opus low vs high, paired-CRN

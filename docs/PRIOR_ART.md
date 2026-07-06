@@ -49,7 +49,7 @@ Closest prior art:
   - LiveCodeBench: https://arxiv.org/abs/2403.07974
 - **Dynabench** is the classic dynamic benchmark platform: human/model-in-the-loop data collection to keep benchmarks from saturating.
   - https://arxiv.org/abs/2104.14337
-- **BetterBench** recommends contamination/gaming mitigations such as globally unique identifiers or encrypting evaluation instances. Your proposal is a different mitigation: regenerate rather than hide.
+- **BetterBench** (Reuel et al.; 46 best-practice criteria assessed over 24 benchmarks) treats contamination/gaming mitigation as a benchmark best practice. Our proposal is a different *kind* of mitigation: regenerate rather than hide. (The specific "unique identifiers / encrypt evaluation instances" mechanisms are in the checklist body, not the abstract — not re-verified against source in the last pass; keep the contrast general until confirmed.)
   - https://arxiv.org/abs/2411.12990
 
 Assessment: **mostly reinvention** at the benchmark-strategy level. The specific application to tau-bench-style relational tool worlds is more interesting.

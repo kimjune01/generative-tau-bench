@@ -836,10 +836,12 @@ provenance check if we ever swap in real-world-derived seed data.
   with preserved difficulty, direct support for width-in-classes)
 - LiveBench, `2406.19314`; LiveCodeBench, `2403.07974`; AntiLeakBench, `2412.13670`
   (freshness-based contamination resistance)
-- ProcGen, `1912.01588`; ProcGen competition, `2103.15332`; ProcTHOR, `2206.06994`;
-  Avalon, `2210.13417` (seeded procedural generation, train/test seed split)
-- Dynabench, `2104.14337`; BetterBench, `2411.12990`; CheckList, `2005.04118`;
-  PaCoST, `2406.18326` (benchmark methodology, paired contamination testing)
+- ProcGen, `1912.01588` (seeded procedural worlds + the train/test seed-split protocol);
+  ProcGen competition, `2103.15332`; ProcTHOR, `2206.06994`; Avalon, `2210.13417`
+  (seeded procedural generation — seed-split protocol is ProcGen's, not theirs)
+- Dynabench, `2104.14337`; BetterBench, `2411.12990`; CheckList, `2005.04118`
+  (benchmark methodology; CheckList is behavioral testing, grouped here by us, not a
+  contamination claim); PaCoST, `2406.18326` (the paired contamination test specifically)
 
 Full assessment and source URLs: `PRIOR_ART_REGEN.md`.
 </content>
